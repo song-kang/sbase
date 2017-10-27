@@ -1,0 +1,27 @@
+include /usr/src/uk/sbase.mk
+
+CC_TARGET   = libsbase_oracle.so
+CC_TARGET_D = libsbase_oracled.so
+INSTALL_PATH= ../../lib/linux-centos
+
+SRCS =  ../../src/db/oracle/*.cpp
+OBJS =  *.o 
+
+all:
+		$(CC) -c $(SRCS) $(CC_INCLUDES) $(CC_COMPLIE)
+		$(CC) -shared $(OBJS) -o $(CC_TARGET)
+		$(RM) *.o
+		$(CP) $(CC_TARGET) $(INSTALL_PATH)/
+
+debug:
+		$(CC) -c $(SRCS) $(CC_INCLUDES) $(CC_COMPLIE_D)
+		$(CC) -shared $(OBJS) -o $(CC_TARGET_D)
+		$(RM) *.o
+		$(CP) $(CC_TARGET_D) $(INSTALL_PATH)/
+
+clean:
+		$(RM) *.o
+		$(RM) $(CC_TARGET)
+
+install:
+		$(CP) $(CC_TARGET) $(INSTALL_PATH)/$(CC_TARGET)

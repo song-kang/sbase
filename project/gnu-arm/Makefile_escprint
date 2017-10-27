@@ -1,0 +1,27 @@
+include /usr/src/uk/sbase.mk-arm
+
+CC_TARGET   = libsbase_escprint.a
+CC_TARGET_D = libsbase_escprintd.a
+INSTALL_PATH= ../../lib/linux-arm
+
+SRCS =  ../../src/print/*.cpp ../../src/print/usb_linux/*.cpp ../../src/print/usb_linux/*.c
+OBJS =  *.o 
+
+all:
+		$(CC) -c $(SRCS) $(CC_INCLUDES) $(CC_COMPLIE)
+		$(AR) $(CC_TARGET) $(OBJS)
+		$(RM) *.o
+		$(CP) $(CC_TARGET) $(INSTALL_PATH)/
+
+debug:
+		$(CC) -c $(SRCS) $(CC_INCLUDES) $(CC_COMPLIE_D)
+		$(AR) $(CC_TARGET_D) $(OBJS)
+		$(RM) *.o
+		$(CP) $(CC_TARGET_D) $(INSTALL_PATH)/
+
+clean:
+		$(RM) *.o
+		$(RM) $(CC_TARGET)
+
+install:
+		$(CP) $(CC_TARGET) $(INSTALL_PATH)/$(CC_TARGET)

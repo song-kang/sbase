@@ -1,0 +1,33 @@
+include /usr/src/uk/sbase.mk
+
+CC_INCLUDES := $(CC_INCLUDES) -I$(SBASE_DIR)/include/zip
+
+CC_TARGET   = libsbase_zip.so
+CC_TARGET_D = libsbase_zipd.so
+INSTALL_PATH= ../../lib/linux-centos
+
+SRCS =  ../../src/zip/*.cpp
+C_SRCS =  ../../src/zip/*.c
+OBJS =  *.o 
+
+all:
+		$(CC) -c $(SRCS) $(CC_INCLUDES) $(CC_COMPLIE)
+		$(RM) $(CC_TARGET)
+		$(CC) -shared $(OBJS) -o $(CC_TARGET)
+		$(RM) *.o
+		$(CP) $(CC_TARGET) $(INSTALL_PATH)/
+
+debug:
+		gcc -c $(C_SRCS) $(CC_INCLUDES) $(CC_COMPLIE_D)
+		$(CC) -c $(SRCS) $(CC_INCLUDES) $(CC_COMPLIE_D)
+		$(RM) $(CC_TARGET)
+		$(CC) -shared $(OBJS) -o $(CC_TARGET_D)
+		$(RM) *.o
+		$(CP) $(CC_TARGET_D) $(INSTALL_PATH)/
+
+clean:
+		$(RM) *.o
+		$(RM) $(CC_TARGET)
+
+install:
+		$(CP) $(CC_TARGET) $(INSTALL_PATH)/$(CC_TARGET)

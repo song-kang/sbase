@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{62847BCC-6B35-4864-B6F5-17D2A0590634}</ProjectGuid>
+    <RootNamespace>sbase_zip</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../../../lib/win32\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../../../lib/win32\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectName)d</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../../../include;../../../include/zip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;SBASE_ZIP_EXPORT_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)d.lib</OutputFile>
+    </Lib>
+    <Link>
+      <ModuleDefinitionFile>sbase_zip.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>../../../include;../../../include/zip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;SBASE_ZIP_EXPORT_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>sbase_zip.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\zip\adler32.c" />
+    <ClCompile Include="..\..\..\src\zip\compress.c" />
+    <ClCompile Include="..\..\..\src\zip\crc32.c" />
+    <ClCompile Include="..\..\..\src\zip\deflate.c" />
+    <ClCompile Include="..\..\..\src\zip\gzclose.c" />
+    <ClCompile Include="..\..\..\src\zip\gzlib.c" />
+    <ClCompile Include="..\..\..\src\zip\gzread.c" />
+    <ClCompile Include="..\..\..\src\zip\gzwrite.c" />
+    <ClCompile Include="..\..\..\src\zip\infback.c" />
+    <ClCompile Include="..\..\..\src\zip\inffast.c" />
+    <ClCompile Include="..\..\..\src\zip\inflate.c" />
+    <ClCompile Include="..\..\..\src\zip\inftrees.c" />
+    <ClCompile Include="..\..\..\src\zip\ioapi.c" />
+    <ClCompile Include="..\..\..\src\zip\iowin32.c" />
+    <ClCompile Include="..\..\..\src\zip\mztools.c" />
+    <ClCompile Include="..\..\..\src\zip\SZip.cpp" />
+    <ClCompile Include="..\..\..\src\zip\trees.c" />
+    <ClCompile Include="..\..\..\src\zip\uncompr.c" />
+    <ClCompile Include="..\..\..\src\zip\unzip.c" />
+    <ClCompile Include="..\..\..\src\zip\zip.c" />
+    <ClCompile Include="..\..\..\src\zip\zutil.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\include\zip\crc32.h" />
+    <ClInclude Include="..\..\..\include\zip\crypt.h" />
+    <ClInclude Include="..\..\..\include\zip\deflate.h" />
+    <ClInclude Include="..\..\..\include\zip\gzguts.h" />
+    <ClInclude Include="..\..\..\include\zip\inffast.h" />
+    <ClInclude Include="..\..\..\include\zip\inffixed.h" />
+    <ClInclude Include="..\..\..\include\zip\inflate.h" />
+    <ClInclude Include="..\..\..\include\zip\inftrees.h" />
+    <ClInclude Include="..\..\..\include\zip\ioapi.h" />
+    <ClInclude Include="..\..\..\include\zip\iowin32.h" />
+    <ClInclude Include="..\..\..\include\zip\mztools.h" />
+    <ClInclude Include="..\..\..\include\zip\SZip.h" />
+    <ClInclude Include="..\..\..\include\zip\trees.h" />
+    <ClInclude Include="..\..\..\include\zip\unzip.h" />
+    <ClInclude Include="..\..\..\include\zip\zconf.h" />
+    <ClInclude Include="..\..\..\include\zip\zip.h" />
+    <ClInclude Include="..\..\..\include\zip\zlib.h" />
+    <ClInclude Include="..\..\..\include\zip\zutil.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="sbase_zip.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\sbase.vcxproj">
+      <Project>{bef03316-f24e-4df4-a5cf-08114d2d7ad7}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

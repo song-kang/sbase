@@ -1,0 +1,169 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{BEF03316-F24E-4DF4-A5CF-08114D2D7AD7}</ProjectGuid>
+    <RootNamespace>sbase</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../../lib/win32\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../../lib/win32\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\wpcap_win32\Include;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\wpcap_win32\Include;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\wpcap_win32\Lib;$(LibraryPath)</LibraryPath>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectName)d</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../../include;../../include/comm;../../include/db;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;SBASE_EXPORT_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)d.lib</OutputFile>
+    </Lib>
+    <Link>
+      <ModuleDefinitionFile>sbase.def</ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>../../include;../../include/comm;../../include/db;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;SBASE_EXPORT_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\SApi.cpp" />
+    <ClCompile Include="..\..\src\SApplication.cpp" />
+    <ClCompile Include="..\..\src\SBaseConfig.cpp" />
+    <ClCompile Include="..\..\src\SBuffer.cpp" />
+    <ClCompile Include="..\..\src\SChinesePy.cpp" />
+    <ClCompile Include="..\..\src\SCom.cpp" />
+    <ClCompile Include="..\..\src\db\SDatabase.cpp" />
+    <ClCompile Include="..\..\src\db\SDatabaseOper.cpp" />
+    <ClCompile Include="..\..\src\SDateTime.cpp" />
+    <ClCompile Include="..\..\src\SFile.cpp" />
+    <ClCompile Include="..\..\src\SHardwareInfo.cpp" />
+    <ClCompile Include="..\..\src\SIniFile.cpp" />
+    <ClCompile Include="..\..\src\SJson.cpp" />
+    <ClCompile Include="..\..\src\SLock.cpp" />
+    <ClCompile Include="..\..\src\SLog.cpp" />
+    <ClCompile Include="..\..\src\SNtp.cpp" />
+    <ClCompile Include="..\..\src\SObject.cpp" />
+    <ClCompile Include="..\..\src\SSaxXml.cpp" />
+    <ClCompile Include="..\..\src\SService.cpp" />
+    <ClCompile Include="..\..\src\SSocket.cpp" />
+    <ClCompile Include="..\..\src\SString.cpp" />
+    <ClCompile Include="..\..\src\comm\STcpClientBase.cpp" />
+    <ClCompile Include="..\..\src\comm\STcpCommBase.cpp" />
+    <ClCompile Include="..\..\src\comm\STcpServerBase.cpp" />
+    <ClCompile Include="..\..\src\SUnitTest.cpp" />
+    <ClCompile Include="..\..\src\SWait.cpp" />
+    <ClCompile Include="..\..\src\SXmlConfig.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\SApi.h" />
+    <ClInclude Include="..\..\include\SApplication.h" />
+    <ClInclude Include="..\..\include\SBaseConfig.h" />
+    <ClInclude Include="..\..\include\SBuffer.h" />
+    <ClInclude Include="..\..\include\SChinesePy.h" />
+    <ClInclude Include="..\..\include\SCom.h" />
+    <ClInclude Include="..\..\include\db\SDatabase.h" />
+    <ClInclude Include="..\..\include\db\SDatabaseOper.h" />
+    <ClInclude Include="..\..\include\SDateTime.h" />
+    <ClInclude Include="..\..\include\SDbf.h" />
+    <ClInclude Include="..\..\include\SFile.h" />
+    <ClInclude Include="..\..\include\SHash.h" />
+    <ClInclude Include="..\..\include\SInclude.h" />
+    <ClInclude Include="..\..\include\SIniFile.h" />
+    <ClInclude Include="..\..\include\SJson.h" />
+    <ClInclude Include="..\..\include\SKeyList.h" />
+    <ClInclude Include="..\..\include\SList.h" />
+    <ClInclude Include="..\..\include\SLock.h" />
+    <ClInclude Include="..\..\include\SLog.h" />
+    <ClInclude Include="..\..\include\SNtp.h" />
+    <ClInclude Include="..\..\include\SObject.h" />
+    <ClInclude Include="..\..\include\SRing.h" />
+    <ClInclude Include="..\..\include\SSaxXml.h" />
+    <ClInclude Include="..\..\include\SService.h" />
+    <ClInclude Include="..\..\include\SSocket.h" />
+    <ClInclude Include="..\..\include\SStack.h" />
+    <ClInclude Include="..\..\include\SString.h" />
+    <ClInclude Include="..\..\include\comm\STcpClientBase.h" />
+    <ClInclude Include="..\..\include\comm\STcpCommBase.h" />
+    <ClInclude Include="..\..\include\comm\STcpServerBase.h" />
+    <ClInclude Include="..\..\include\SType.h" />
+    <ClInclude Include="..\..\include\SUnitTest.h" />
+    <ClInclude Include="..\..\include\SWait.h" />
+    <ClInclude Include="..\..\include\SXmlConfig.h" />
+    <ClInclude Include="..\..\src\SHardwareInfo.h" />
+    <ClInclude Include="targetver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="sbase.def" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
