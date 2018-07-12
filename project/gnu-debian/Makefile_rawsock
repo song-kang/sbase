@@ -1,0 +1,47 @@
+CC = g++
+AR = ar cqs
+
+CC_INCLUDES = -I/usr/include -I/usr/local/include -I../../include  -I../../include/comm  -I../../include/db
+
+CC_FLAGS    = $(CC_INCLUDES) -pipe -w -O3 -pipe 
+CC_FLAGS_D  = $(CC_INCLUDES) -pipe -Wall -O2 -g -pipe
+CC_COMPLIE  = $(CC_INCLUDES) $(CC_FLAGS) $<
+CC_COMPLIE_D= $(CC_INCLUDES) $(CC_FLAGS_D) $<
+CC_LINK     = -L/usr/lib/ -L/usr/local/lib/ -lpthread -lm -lrt
+
+CC_TARGET   = libsbase_rawsock.so
+CC_TARGET_D   = libsbase_rawsockd.so
+INSTALL_PATH= ../../lib/linux
+
+RM = rm -rf
+LN = ln
+CP = cp -f
+
+SRCS =  ../../src/comm/SRawSocket.cpp
+OBJS =  *.o 
+
+all:
+		$(CC) -c $(SRCS) $(CC_COMPLIE)
+		$(RM) $(CC_TARGET)
+		$(CC) -shared $(OBJS) -o $(CC_TARGET)
+		$(RM) *.o
+		$(RM) *.d
+		$(CP) $(CC_TARGET) $(INSTALL_PATH)/
+
+debug:
+		$(CC) -c $(SRCS) $(CC_COMPLIE_D)
+		$(RM) $(CC_TARGET_D)
+		$(CC) -shared $(OBJS) -o $(CC_TARGET_D)
+		$(RM) *.o
+		$(RM) *.d
+		$(CP) $(CC_TARGET_D) $(INSTALL_PATH)/
+
+clean:
+		$(RM) *.o
+		$(RM) *.d
+		$(RM) $(CC_TARGET)
+		$(RM) $(CC_TARGET_D)
+
+install:
+		$(CP) $(CC_TARGET) $(INSTALL_PATH)/$(CC_TARGET)
+		$(CP) $(CC_TARGET_D) $(INSTALL_PATH)/$(CC_TARGET_D)
