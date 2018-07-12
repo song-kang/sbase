@@ -128,6 +128,24 @@ void SSvgPainter::DrawObject(SBaseDC *pDC, SSvgObject *pObj, int x, int y,bool b
 			p = p->GetNext();
 			continue;
 		}
+#ifdef QT_GUI_LIB
+		int rotate = p->GetAttributeI("rotate")%360;
+		SRect rect;
+		SSvgObject::SVG_RECT *pSvgRect = p->GetRect();
+		rect.left = GetCoordX(pSvgRect->left);
+		rect.top = GetCoordY(pSvgRect->top);
+		rect.right = GetCoordX(pSvgRect->right);
+		rect.bottom = GetCoordY(pSvgRect->bottom);
+		rect.OffsetRect(x+cx,y+cy);
+		QPointF center((rect.right+rect.left)/2,(rect.bottom+rect.top)/2);
+		QPainter *painter = ((QPainter*)pDC->GetHandle());
+		if(rotate != 0)
+		{
+			painter->translate(center);
+			painter->rotate(rotate);
+			painter->translate(-center);
+		}
+#endif
 		//画布元素不画
 //		if(m_bEditAllow == false && p == m_Document.GetRootObject()->GetChild())
 //		{
@@ -166,15 +184,284 @@ void SSvgPainter::DrawObject(SBaseDC *pDC, SSvgObject *pObj, int x, int y,bool b
 			default:
 				break;
 		}
-
+		if(p->GetChild() != NULL)
+		{
+			SSvgObject *pSub = p->GetChild();
+			SString show_st = p->GetAttribute("show_st");//当前层的show_st只对第一层子节点的st_val生效
+			if(show_st.length() == 0)
 		DrawObject(pDC,p->GetChild(),x+cx,y+cy);
+			else
+			{
+				SString sub_show_st;
+				while(pSub)
+				{
+					if(show_st.length() > 0)
+					{
+						sub_show_st = pSub->GetAttribute("st_val");
+						if(sub_show_st.length() > 0 && sub_show_st != show_st)
+						{
+							//忽略非当前状态
+							pSub = pSub->GetNext();
+							continue;
+						}
+					}
+					DrawObject(pDC,pSub,x+cx,y+cy,true);
+					pSub = pSub->GetNext();
+				}
+			}
+		}
+
+#ifdef QT_GUI_LIB
+		if(rotate != 0)
+		{
+			painter->translate(center);
+			painter->rotate(-rotate);
+			painter->translate(-center);
+		}
+#endif
 		if(bOnlyOne)
 			break;
 		p = p->GetNext();
+		continue;
+
+nextPos:
+#ifdef QT_GUI_LIB
+		if(rotate != 0)
+		{
+			painter->translate(center);
+			painter->rotate(-rotate);
+			painter->translate(-center);
+		}
+#endif
+		continue;
+
+breakPos:
+#ifdef QT_GUI_LIB
+		if(rotate != 0)
+		{
+			painter->translate(center);
+			painter->rotate(-rotate);
+			painter->translate(-center);
+		}
+#endif
+		break;
 	}
 }
 
 //绘制当前对象及其下的全部对象
+void SSvgPainter::DrawFlashObject(SBaseDC *pDC, SSvgObject *pObj, int x, int y,bool bOnlyOne,bool bUseObj/*=false*/)
+{
+	//仅处理平移//和缩放
+	int cx = 0,cy = 0;
+	//float rx = 1,ry = 1;
+	SSvgObject *p=pObj;
+	SSvgObject *pDraw;
+	while(p)
+	{
+		pDraw = p;
+		if(p->GetType() == SSvgObject::TYPE_USE)
+		{
+			SSvgObject *pSymbol = m_Document.SearchSymbolObj(p->GetAttribute("xlink:href"));
+			if(pSymbol == NULL)
+				return;
+			pDraw = pSymbol;
+			cx = GetCoordX(p->GetAttributeI("x"));
+			cy = GetCoordY(p->GetAttributeI("y"));
+			SString transform = p->GetAttribute("transform");
+			int p1,p2;
+			p1 = transform.find("translate(");
+			if(p1)
+			{
+				p1 += strlen("translate(");
+				p2 = transform.find(")",p1);
+				if(p2 > 0)
+				{
+					SString translate = transform.mid(p1,p2-p1-1);
+					// 					cx += SString::GetIdAttributeI(1,translate,",");
+					// 					cy += SString::GetIdAttributeI(2,translate,",");
+				}
+			}
+			// 		p1 = transform.find("scale(");
+			// 		if(p1)
+			// 		{
+			// 			p1 += strlen("scale(");
+			// 			p2 = transform.find(")",p1);
+			// 			if(p2 > 0)
+			// 			{
+			// 				SString scale = transform.mid(p1,p2-p1-1);
+			// 				if(scale.find(",")>0)
+			// 				{
+			// 					rx = SString::GetIdAttributeF(1,scale,",");
+			// 					ry = SString::GetIdAttributeF(2,scale,",");
+			// 				}
+			// 				else
+			// 					rx =ry = scale.toFloat();
+			// 			}
+			// 		}
+		}
+		if(p->GetParent() == m_Document.GetRootObject())
+		{
+			//对象级
+			if(!p->IsFlash())
+			{
+				//跳过非动画图元
+				p = p->GetNext();
+				continue;
+			}
+			//当前对象是否在选中列表中，若在则不用在这里画,动态画时不判断
+			//不使用这种方式，而改成只要选中框
+			if(m_iDrawUnSelectedMode == 1)
+			{
+				if(!m_SelectedObjList.exist(p))
+				{
+					p = p->GetNext();
+					continue;
+				}
+			}
+			else if(m_iDrawUnSelectedMode == 2)
+			{
+				if(m_SelectedObjList.exist(p))
+				{
+					p = p->GetNext();
+					continue;
+				}
+			}
+		}
+		if(m_iAutoFlashType == 2 && p->IsAutoFlash())
+		{
+			p = p->GetNext();
+			continue;
+		}
+
+		//if(0)//TODO !IsInViewRect(p))
+		if((!IsInViewRect(p) || pDraw != p) && !bUseObj)
+		{
+			DrawFlashObject(pDC,pDraw->GetChild(),x+cx,y+cy,false,pDraw != p);
+			if(bOnlyOne)
+				break;
+			p = p->GetNext();
+			continue;
+		}
+#ifdef QT_GUI_LIB
+		int rotate = p->GetAttributeI("rotate")%360;
+		SRect rect;
+		SSvgObject::SVG_RECT *pSvgRect = p->GetRect();
+		rect.left = GetCoordX(pSvgRect->left);
+		rect.top = GetCoordY(pSvgRect->top);
+		rect.right = GetCoordX(pSvgRect->right);
+		rect.bottom = GetCoordY(pSvgRect->bottom);
+		rect.OffsetRect(x+cx,y+cy);
+		QPointF center((rect.right+rect.left)/2,(rect.bottom+rect.top)/2);
+		QPainter *painter = ((QPainter*)pDC->GetHandle());
+		if(rotate != 0)
+		{
+			painter->translate(center);
+			painter->rotate(rotate);
+			painter->translate(-center);
+		}
+#endif
+		//画布元素不画
+		//		if(m_bEditAllow == false && p == m_Document.GetRootObject()->GetChild())
+		//		{
+		//			p = p->GetNext();
+		//			continue;
+		//		}
+		switch(p->GetType())
+		{
+		case SSvgObject::TYPE_RECT:
+			DrawRect(pDC,p,x+cx,y+cy);
+			break;
+		case SSvgObject::TYPE_RECTTEXT:
+			DrawRectText(pDC,p,x+cx,y+cy);
+			break;
+		case SSvgObject::TYPE_TEXT:
+			DrawSvgText(pDC,p,x+cx,y+cy);
+			break;
+		case SSvgObject::TYPE_ELLIPSE:
+			DrawEllipse(pDC,p,x+cx,y+cy);
+			break;
+		case SSvgObject::TYPE_CIRCLE:
+			DrawCircle(pDC,p,x+cx,y+cy);
+			break;
+		case SSvgObject::TYPE_LINE:
+			DrawLine(pDC,p,x+cx,y+cy);
+			break;
+		case SSvgObject::TYPE_POLYLINE:
+			DrawPolyLine(pDC,p,x+cx,y+cy);
+			break;
+		case SSvgObject::TYPE_PATH:
+			DrawPath(pDC,p,x+cx,y+cy);
+			break;
+		case SSvgObject::TYPE_PIC:
+			DrawPic(pDC,p,x+cx,y+cy);
+			break;
+		default:
+			break;
+		}
+		if(p->GetChild() != NULL)
+		{
+			SSvgObject *pSub = p->GetChild();
+			SString show_st = p->GetAttribute("show_st");//当前层的show_st只对第一层子节点的st_val生效
+			if(show_st.length() == 0)
+				DrawFlashObject(pDC,p->GetChild(),x+cx,y+cy);
+			else
+			{
+				SString sub_show_st;
+				while(pSub)
+				{
+					if(show_st.length() > 0)
+					{
+						sub_show_st = pSub->GetAttribute("st_val");
+						if(sub_show_st.length() > 0 && sub_show_st != show_st)
+						{
+							//忽略非当前状态
+							pSub = pSub->GetNext();
+							continue;
+						}
+					}
+					DrawFlashObject(pDC,pSub,x+cx,y+cy,true);
+					pSub = pSub->GetNext();
+				}
+			}
+		}
+
+#ifdef QT_GUI_LIB
+		if(rotate != 0)
+		{
+			painter->translate(center);
+			painter->rotate(-rotate);
+			painter->translate(-center);
+		}
+#endif
+		if(bOnlyOne)
+			break;		
+		p = p->GetNext();
+		continue;
+
+nextPos:
+#ifdef QT_GUI_LIB
+		if(rotate != 0)
+		{
+			painter->translate(center);
+			painter->rotate(-rotate);
+			painter->translate(-center);
+		}
+#endif
+		continue;
+
+breakPos:
+#ifdef QT_GUI_LIB
+		if(rotate != 0)
+		{
+			painter->translate(center);
+			painter->rotate(-rotate);
+			painter->translate(-center);
+		}
+#endif
+		break;
+	}
+}
+/*
 void SSvgPainter::DrawFlashObject(SBaseDC *pDC, SSvgObject *pObj, int x, int y)
 {
 	SSvgObject *p=pObj;
@@ -238,6 +525,7 @@ void SSvgPainter::DrawFlashObject(SBaseDC *pDC, SSvgObject *pObj, int x, int y)
 		p = p->GetNext();
 	}
 }
+*/
 
 //根据根对象绘制对齐点
 void SSvgPainter::DrawAlignPoint(SBaseDC *pDC/*, SSvgObject *pObj*/, int x, int y,int w,int h)
@@ -559,6 +847,8 @@ int GetHexByStr(char *str)
 //转换颜色
 SCOLOR SSvgPainter::GetColorByString(SString sColor)
 {
+	if(sColor == "none")
+		return SRGB(0,0,0,0);
 	BYTE r=0,g=0,b=0;
 	char *pStr=(char*)sColor.GetBuffer(0);
 	switch(*pStr)
@@ -697,8 +987,8 @@ void SSvgPainter::DrawRect(SBaseDC *pDC, SSvgObject *pObj, int x, int y)
 		line_width = 1;
 	QBrush bLine(QColor(sLineColor.r,sLineColor.g,sLineColor.b,alpha));
 	int penstyle = pObj->GetAttributeI("stroke-dasharray")+1;
-	QPen pen(bLine,line_width,(Qt::PenStyle)penstyle);
-
+	QPen pen(bLine,line_width,(Qt::PenStyle)((sLineColor.a==0)? (Qt::NoPen):penstyle));
+	bool bFillRect = false;
 	QPainter *painter = ((QPainter*)pDC->GetHandle());
 	QRect qrect(rect.left,rect.top,rect.width(),rect.height());
 	if(bFill)
@@ -752,6 +1042,7 @@ void SSvgPainter::DrawRect(SBaseDC *pDC, SSvgObject *pObj, int x, int y)
 			//纯色
 			QBrush bBack(QColor(sBackColor.r,sBackColor.g,sBackColor.b,alpha));
 			painter->setBrush(bBack);
+			bFillRect = true;
 		}
 	}
 	else
@@ -760,7 +1051,15 @@ void SSvgPainter::DrawRect(SBaseDC *pDC, SSvgObject *pObj, int x, int y)
 	int round_x = GetCoord(pObj->GetAttributeI("rx"));
 	int round_y = GetCoord(pObj->GetAttributeI("ry"));
 	if(round_x == 0 && round_y == 0)
-		painter->drawRect(qrect);
+	{
+		if(bFillRect)
+			painter->fillRect(qrect,painter->brush());
+		painter->drawLine(qrect.left(),qrect.top(),qrect.right(),qrect.top());
+		painter->drawLine(qrect.right(),qrect.top(),qrect.right(),qrect.bottom());
+		painter->drawLine(qrect.right(),qrect.bottom(),qrect.left(),qrect.bottom());
+		painter->drawLine(qrect.left(),qrect.bottom(),qrect.left(),qrect.top());
+		//painter->drawRect(qrect);
+	}
 	else
 		painter->drawRoundedRect(qrect, round_x, round_y);
 #else
@@ -1104,8 +1403,7 @@ void SSvgPainter::DrawEllipse(SBaseDC *pDC, SSvgObject *pObj, int x, int y)
 
 	QBrush bLine(QColor(sLineColor.r,sLineColor.g,sLineColor.b,alpha));
 	int penstyle = pObj->GetAttributeI("stroke-dasharray")+1;
-	QPen pen(bLine,line_width,(Qt::PenStyle)penstyle);
-
+	QPen pen(bLine,line_width,(Qt::PenStyle)((sLineColor.a==0)? (Qt::NoPen):penstyle));
 	QPainter *painter = ((QPainter*)pDC->GetHandle());
 	SRect rect;
 	rect.left = x1;
@@ -1641,17 +1939,17 @@ void SSvgPainter::DrawPic(SBaseDC *pDC, SSvgObject *pObj, int x, int y)
 // 		pObj->SetAttributeValue("rawh",SString::toString(pPic->m_pixmap.height()));
 // 		pObj->SetAttributeValue("raww",SString::toString(pPic->m_pixmap.width()));
 // 	}
-#ifdef QT_GUI_LIB
-	int rotate = pObj->GetAttributeI("rotate")%360;
-	QPointF center((rect.right+rect.left)/2,(rect.bottom+rect.top)/2);
-	QPainter *painter = ((QPainter*)pDC->GetHandle());
-	if(rotate > 0)
-	{
-		painter->translate(center);
-		painter->rotate(rotate);
-		painter->translate(-center);
-	}
-#endif
+// #ifdef QT_GUI_LIB
+// 	int rotate = pObj->GetAttributeI("rotate")%360;
+// 	QPointF center((rect.right+rect.left)/2,(rect.bottom+rect.top)/2);
+// 	QPainter *painter = ((QPainter*)pDC->GetHandle());
+// 	if(rotate > 0)
+// 	{
+// 		painter->translate(center);
+// 		painter->rotate(rotate);
+// 		painter->translate(-center);
+// 	}
+// #endif
 	if(pPic != NULL)
 	{
 		SString sAlpha = pObj->GetAttribute("alpha");
@@ -1661,14 +1959,14 @@ void SSvgPainter::DrawPic(SBaseDC *pDC, SSvgObject *pObj, int x, int y)
 
 		pPic->Render(pDC->GetHandle(),rect.left,rect.top,rect.right-rect.left,rect.bottom-rect.top,alpha);
 	}
-#ifdef QT_GUI_LIB
-	if(rotate > 0)
-	{
-		painter->translate(center);
-		painter->rotate(-rotate);
-		painter->translate(-center);
-	}
-#endif
+// #ifdef QT_GUI_LIB
+// 	if(rotate > 0)
+// 	{
+// 		painter->translate(center);
+// 		painter->rotate(-rotate);
+// 		painter->translate(-center);
+// 	}
+// #endif
 }
 
 //测试一个对象是否可显示

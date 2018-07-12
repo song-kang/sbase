@@ -2152,6 +2152,20 @@ bool SOracle::ReadLobToMem(SString sTable,SString sLobField,SString sWhere,unsig
 
 }
 
+
+//////////////////////////////////////////////////////////////////////////
+// 描    述:  用于释放ReadLobToMem函数产生的缓冲区
+// 作    者:  邵凯田
+// 创建时间:  2017-12-1 11:01
+// 参数说明:  @pBuf为缓冲区指针
+// 返 回 值:  void
+//////////////////////////////////////////////////////////////////////////
+void SOracle::FreeLobMem(unsigned char* pBuf)
+{
+	if(pBuf)
+		delete[] pBuf;
+}
+
 bool SOracle::UpdateLongRawFromFile(SString sTable,SString sLobField,SString sWhere,SString ysFile) 
 {
 	//6.执行一个带有LongRaw的Update语句,将文件内容保存到LongRaw字段中

@@ -1,6 +1,6 @@
 rm -rf debug
 rm -rf *.a
-make -f Makefile debug
+make -f Makefile_sbase debug
 make -f Makefile_escprint debug
 make -f Makefile_mdb debug
 make -f Makefile_mysql debug

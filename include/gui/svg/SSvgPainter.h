@@ -85,7 +85,8 @@ public:
 	
 	//绘制一个对象
 	void DrawObject(SBaseDC *pDC, SSvgObject *pObj, int x=0, int y=0, bool bOnlyOne=false,bool bUseObj=false);
-	void DrawFlashObject(SBaseDC *pDC, SSvgObject *pObj, int x, int y);
+	void DrawFlashObject(SBaseDC *pDC, SSvgObject *pObj, int x=0, int y=0, bool bOnlyOne=false,bool bUseObj=false);
+	//void DrawFlashObject(SBaseDC *pDC, SSvgObject *pObj, int x, int y);
 	void DrawObjectSelected(SBaseDC *pDC, SSvgObject *pObj, int x, int y,SCOLOR colTag,bool bEditable);
 	//根据根对象绘制对齐点
 	void DrawAlignPoint(SBaseDC *pDC/*, SSvgObject *pObj*/, int x=0, int y=0,int w=0,int h=0);

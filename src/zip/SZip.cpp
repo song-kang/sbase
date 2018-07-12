@@ -171,6 +171,19 @@ bool SZip::Close()
 bool SZip::AddFile(const std::string& file, SZipZLevels level)
 {
 	m_Level = level;
+#ifndef WIN32
+	FILE* stream;
+	stream = fopen64(file.c_str(), "rb");
+	if(stream != NULL)
+	{
+		fclose(stream);
+		//
+		std::string filename = file;
+		if(filename.rfind("/") > 0)
+			filename = filename.substr(filename.rfind("/")+1);
+		return AddFile(filename,file);
+	}
+#endif
 	return AddDirectory("", file);
 }
 

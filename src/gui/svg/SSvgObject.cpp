@@ -114,10 +114,19 @@ void SSvgObject::SetAttributeValue(const char* sAttribute, const char* sValue, b
 		else
 			m_z = atoi(sValue);
 	}
+	bool bAutoFlash = false;
+	if(strcmp(sAttribute,"ext-attribute") == 0)
+	{
+		SString str = sValue;
+		if(SString::GetAttributeValueI(str,"autoflash") == 1)
+			bAutoFlash = true;
+	}
+	SString str = sValue;
 	while(p)
 	{
 		p->m_mapAttribute.SetAt(sAttribute,sValue);
-
+		if(bAutoFlash)
+			p->SetAutoFlash(true);
 // 		//ÐÞ¸ÄÍ¼Æ¬
 // 		if(p->GetType() ==  TYPE_PIC && strcmp(sAttribute,"href") == 0)
 // 		{
@@ -650,7 +659,7 @@ bool SSvgObject::Offset(float dx, float dy)
 							if(p2 < 0)
 								break;
 							str = points.Mid(p1,p2-p1);
-							rx = str.toInt();
+							rx = str.toFloat();
 							p1 = p2+1;
 
 							//ry
@@ -658,7 +667,7 @@ bool SSvgObject::Offset(float dx, float dy)
 							if(p2 < 0)
 								break;
 							str = points.Mid(p1,p2-p1);
-							ry = str.toInt();
+							ry = str.toFloat();
 							p1 = p2+1;
 							
 							//xrotation
@@ -753,17 +762,17 @@ bool SSvgObject::Offset(float dx, float dy)
 					p2=points.Find(",",p1);
 					if(p2 < 0)
 						break;
-					x = atoi(points.Mid(p1,p2-p1));
+					x = atof(points.Mid(p1,p2-p1));
 					p2 ++;
 					p3=points.Find(" ",p2);
 					if(p3 < 0)
 						p3 = points.GetLength();
-					y = atoi(points.Mid(p2,p3-p2));
+					y = atof(points.Mid(p2,p3-p2));
 					p1 = p3+1;
 					
 					x += dx;
 					y += dy;
-					newpoints += SString::toString((int)x)+","+SString::toString((int)y)+" ";
+					newpoints += SString::toString(x)+","+SString::toString(y)+" ";
 				}
 				if(newpoints.GetLength()>0)
 					newpoints = newpoints.Left(newpoints.GetLength()-1);
@@ -888,7 +897,7 @@ bool SSvgObject::Scale(float scale,float px0,float py0)
 							if(p2 < 0)
 								break;
 							str = points.Mid(p1,p2-p1);
-							rx = str.toInt();
+							rx = str.toFloat();
 							p1 = p2+1;
 
 							//ry
@@ -896,7 +905,7 @@ bool SSvgObject::Scale(float scale,float px0,float py0)
 							if(p2 < 0)
 								break;
 							str = points.Mid(p1,p2-p1);
-							ry = str.toInt();
+							ry = str.toFloat();
 							p1 = p2+1;
 							
 							//xrotation

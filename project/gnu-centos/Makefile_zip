@@ -11,6 +11,7 @@ C_SRCS =  ../../src/zip/*.c
 OBJS =  *.o 
 
 all:
+		gcc -c $(C_SRCS) $(CC_INCLUDES) $(CC_COMPLIE)
 		$(CC) -c $(SRCS) $(CC_INCLUDES) $(CC_COMPLIE)
 		$(RM) $(CC_TARGET)
 		$(CC) -shared $(OBJS) -o $(CC_TARGET)

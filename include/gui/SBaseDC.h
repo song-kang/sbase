@@ -23,7 +23,7 @@ typedef struct SBASE_QTGUI_EXPORT SCOLOR
 {
 	SCOLOR()
 	{
-		a = 0;
+		a = 255;
 	}
 	BYTE a;//alpha
 	BYTE r;
@@ -144,7 +144,7 @@ public:
 	}
 
 };
-SCOLOR SRGB(BYTE r,BYTE g,BYTE b,BYTE a=0);
+SCOLOR SRGB(BYTE r,BYTE g,BYTE b,BYTE a=255);
 class SBASE_QTGUI_EXPORT SBaseDC
 {
 public:

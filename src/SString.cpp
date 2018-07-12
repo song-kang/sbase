@@ -1623,8 +1623,8 @@ int StringCharsetConvert2(const char* from_charset,const char* to_charset,char* 
 	}
 	char *inbuf2 = inbuf;
 	char* outbuf2 = outbuf;
-	int inlen2 = inlen;
-	int outlen2 = outlen;
+	size_t inlen2 = inlen;
+	size_t outlen2 = outlen;
 
 	//char *outbuf0 = outbuf;
 	char **pin = &inbuf2;

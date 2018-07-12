@@ -690,11 +690,18 @@ bool SXmlConfig::SaveNode(SFile &file,SBaseConfig *pNode,int &level)
 		sLine = sLine.toUtf8();
 	file.writeString(sLine);
 	int cols = pNode->GetAttributeCount();
+
+	SString sAttrName,sAttrVal;
 	for(i=0;i<cols;i++)
 	{
+		sAttrName = pNode->GetAttributeName(i);
 		if(pNode->GetAttributeName(i).length() > 0)
 		{
-			sLine.sprintf(" %s=\"%s\"",pNode->GetAttributeName(i).data(),pNode->GetAttribute(pNode->GetAttributeName(i)).data());
+			sAttrVal = pNode->GetAttribute(sAttrName);
+			if(sAttrVal.length() > 1024)
+				sLine = " "+sAttrName+"=\""+sAttrVal+"\"";
+			else
+				sLine.sprintf(" %s=\"%s\"",sAttrName.data(),sAttrVal.data());
 			if(m_iEncodeing == STR_ENCODING_UTF8)
 				sLine = sLine.toUtf8();
 			file.writeString(sLine);
@@ -788,12 +795,18 @@ bool SXmlConfig::SaveNodeText(SString &sXml,SBaseConfig *pNode,int &level)
 	if(m_iEncodeing == STR_ENCODING_UTF8)
 		sLine = sLine.toUtf8();
 	sXml += sLine;
+	SString sAttrName,sAttrVal;
 	int cols = pNode->GetAttributeCount();
 	for(i=0;i<cols;i++)
 	{
-		if(pNode->GetAttributeName(i).length() > 0)
+		sAttrName = pNode->GetAttributeName(i);
+		if(sAttrName.length() > 0)
 		{
-			sLine.sprintf(" %s=\"%s\"",pNode->GetAttributeName(i).data(),pNode->GetAttribute(pNode->GetAttributeName(i)).data());
+			sAttrVal = pNode->GetAttribute(sAttrName);
+			if(sAttrVal.length() > 1024)
+				sLine = " "+sAttrName+"=\""+sAttrVal+"\"";
+			else
+				sLine.sprintf(" %s=\"%s\"",sAttrName.data(),sAttrVal.data());
 			if(m_iEncodeing == STR_ENCODING_UTF8)
 				sLine = sLine.toUtf8();
 			sXml += sLine;

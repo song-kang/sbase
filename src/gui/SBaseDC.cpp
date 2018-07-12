@@ -12,7 +12,7 @@
  **/
 #include "SBaseDC.h"
 
-SCOLOR SRGB(BYTE r,BYTE g,BYTE b,BYTE a/*=0*/)
+SCOLOR SRGB(BYTE r,BYTE g,BYTE b,BYTE a/*=255*/)
 {
 	SCOLOR color;
 	color.r = r;

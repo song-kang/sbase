@@ -678,6 +678,18 @@ bool SSvgDocument::WriteSvgNode(SSvgObject *pSvgObj, SFile *pFile, int iLevel,SS
 				WriteAttributeToText(pObj,"onmouseover",pOutText,"change_attribut1(evt)");
 				WriteAttributeToText(pObj,"onmouseout",pOutText,"change_attribut2(evt)");
 			}
+			if(pObj->GetAttribute("rotate").length() > 0)
+			{
+				WriteAttributeToText(pObj,"rotate",pOutText);
+			}
+			if(pObj->GetAttribute("show_st").length() > 0)
+			{
+				WriteAttributeToText(pObj,"show_st",pOutText);
+			}
+			if(pObj->GetAttribute("st_val").length() > 0)
+			{
+				WriteAttributeToText(pObj,"st_val",pOutText);
+			}
 			if(pObj->GetAttribute("ext-attribute").length() > 0)
 			{
 				WriteAttributeToText(pObj,"ext-attribute",pOutText);
@@ -960,6 +972,18 @@ bool SSvgDocument::WriteSvgNode(SSvgObject *pSvgObj, SFile *pFile, int iLevel,SS
 			WriteAttribute(pObj,pFile,"onmousedown","onmousedown(evt)");
 			WriteAttribute(pObj,pFile,"onmouseover","change_attribut1(evt)");
 			WriteAttribute(pObj,pFile,"onmouseout","change_attribut2(evt)");
+		}
+		if(pObj->GetAttribute("rotate").length() > 0)
+		{
+			WriteAttribute(pObj,pFile,"rotate");
+		}
+		if(pObj->GetAttribute("show_st").length() > 0)
+		{
+			WriteAttribute(pObj,pFile,"show_st");
+		}
+		if(pObj->GetAttribute("st_val").length() > 0)
+		{
+			WriteAttribute(pObj,pFile,"st_val");
 		}
 		if(pObj->GetAttribute("ext-attribute").length() > 0)
 		{

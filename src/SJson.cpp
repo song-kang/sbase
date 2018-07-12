@@ -27,9 +27,15 @@ SJsonObject::SJsonObject()
 SJsonObject::~SJsonObject()
 {
 	if(m_pChildObjects != NULL)
+	{
 		delete m_pChildObjects;
+		m_pChildObjects = NULL;
+	}
 	if(m_pArrayObjects != NULL)
+	{
 		delete m_pArrayObjects;
+		m_pArrayObjects = NULL;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -160,6 +166,17 @@ SString SJsonObject::ReadString(char* &pText)
 //////////////////////////////////////////////////////////////////////////
 bool SJsonObject::ParseText(char* &pText)
 {
+	//解析文本到对象时，先删除原有的对象，防止内容重复
+	if(m_pChildObjects != NULL)
+	{
+		delete m_pChildObjects;
+		m_pChildObjects = NULL;
+	}
+	if(m_pArrayObjects != NULL)
+	{
+		delete m_pArrayObjects;
+		m_pArrayObjects = NULL;
+	}
 	//bool bHaveVarName = false;
 
 	//seek to valid char

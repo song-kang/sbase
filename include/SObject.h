@@ -113,6 +113,16 @@
 #endif//SBASE_MYSQL_EXPORT_DLL
 #endif//SBASE_MYSQL_LIB_STATIC
 
+#ifdef SBASE_ODBC_LIB_STATIC  //静态库，不需要导出、导出
+#define SBASE_ODBC_EXPORT
+#else //动态库，导出动态库中为导出申明，其他为导入申明
+#ifdef  SBASE_ODBC_EXPORT_DLL
+#define SBASE_ODBC_EXPORT __declspec(dllexport)
+#else //SBASE_ODBC_EXPORT_DLL
+#define SBASE_ODBC_EXPORT __declspec(dllimport)
+#endif//SBASE_ODBC_EXPORT_DLL
+#endif//SBASE_ODBC_LIB_STATIC
+
 #ifdef SBASE_ORACLE_LIB_STATIC  //静态库，不需要导出、导出
 #define SBASE_ORACLE_EXPORT
 #else //动态库，导出动态库中为导出申明，其他为导入申明
@@ -169,6 +179,7 @@
 #define SBASE_ESCPRINT_EXPORT
 #define SBASE_MDB_EXPORT
 #define SBASE_MYSQL_EXPORT
+#define SBASE_ODBC_EXPORT
 #define SBASE_ORACLE_EXPORT
 #define SBASE_PGSQL_EXPORT
 #define SBASE_QTGUI_EXPORT

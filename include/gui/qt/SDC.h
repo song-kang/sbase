@@ -81,7 +81,7 @@ Qt::DashDotLine 4 Alternate dots and dashes.
 Qt::DashDotDotLine 5 One dash, two dots, one dash, two dots. 
 Qt::CustomDashLine 6 A custom pattern defined using QPainterPathStroker::setDashPattern(). 
 */
-		m_hDC->setPen(QPen(QColor(p->m_Color.r, p->m_Color.g, p->m_Color.b),p->m_iWidth,(Qt::PenStyle)(p->m_iStyle+1),Qt::RoundCap));
+		m_hDC->setPen(QPen(QColor(p->m_Color.r, p->m_Color.g, p->m_Color.b),p->m_iWidth,(Qt::PenStyle)(p->m_Color.a==0?(Qt::NoPen):(p->m_iStyle+1)),Qt::RoundCap));
 // 		m_hDC->setPen((Qt::PenStyle)(p->m_iStyle+1));
 // 		m_hDC->setPen(QColor(p->m_Color.r, p->m_Color.g, p->m_Color.b));
 // 		QPen pen = m_hDC->pen();

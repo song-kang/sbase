@@ -74,7 +74,7 @@ SSvgPointsEditDlg::SSvgPointsEditDlg(QWidget *parent) : QDialog(parent)
 {
 	m_bInited = false;
 	this->resize(300, 400);
-	setWindowFlags( Qt::Dialog | Qt::Tool | Qt::WindowStaysOnTopHint /*| Qt::MSWindowsFixedSizeDialogHint*/);
+	setWindowFlags( Qt::Dialog /*| Qt::Tool | Qt::WindowStaysOnTopHint*/ /*| Qt::MSWindowsFixedSizeDialogHint*/);
 
 	gridLayout = new QGridLayout(this);
 	verticalLayout = new QVBoxLayout();
@@ -420,6 +420,9 @@ bool SSvgAttributeWnd::LoadObject(SSvgObject *pObj)
 		AddAttribute("uri",pObj);
 		AddAttribute("caption",pObj);
 		AddAttribute("z",pObj);
+		AddAttribute("rotate",pObj);
+		AddAttribute("show_st",pObj);//希望显示下级图元的状态
+		AddAttribute("st_val",pObj);//当前图元对应的状态值
 		AddAttribute("ext-attribute",pObj);
 		break;
 	case SSvgObject::TYPE_RECT:			//区域
@@ -438,6 +441,8 @@ bool SSvgAttributeWnd::LoadObject(SSvgObject *pObj)
 		AddAttribute("rx",pObj);
 		AddAttribute("ry",pObj);
 		AddAttribute("alpha",pObj);
+		AddAttribute("rotate",pObj);
+		AddAttribute("st_val",pObj);//当前图元对应的状态值
 		AddAttribute("ext-attribute",pObj);
 		break;
 	case SSvgObject::TYPE_USE:				//引用符号
@@ -448,6 +453,8 @@ bool SSvgAttributeWnd::LoadObject(SSvgObject *pObj)
 		AddAttribute("y",pObj);
 		AddAttribute("z",pObj);
 		AddAttribute("xlink:href",pObj);
+		AddAttribute("rotate",pObj);
+		AddAttribute("st_val",pObj);//当前图元对应的状态值
 		AddAttribute("ext-attribute",pObj);
 		break;
 	case SSvgObject::TYPE_RECTTEXT:			//区域文字
@@ -467,6 +474,8 @@ bool SSvgAttributeWnd::LoadObject(SSvgObject *pObj)
 		// 		AddAttribute("font-weight",pObj);
 		AddAttribute("fill",pObj);
 		AddAttribute("text",pObj);
+		AddAttribute("rotate",pObj);
+		AddAttribute("st_val",pObj);//当前图元对应的状态值
 		AddAttribute("ext-attribute",pObj);
 		break;
 	case SSvgObject::TYPE_TEXT:			//文字
@@ -483,6 +492,8 @@ bool SSvgAttributeWnd::LoadObject(SSvgObject *pObj)
 		AddAttribute("fill",pObj);
 		AddAttribute("text",pObj);
 		AddAttribute("text-anchor",pObj);
+		AddAttribute("rotate",pObj);
+		AddAttribute("st_val",pObj);//当前图元对应的状态值
 		AddAttribute("ext-attribute",pObj);
 		break;
 	case SSvgObject::TYPE_ELLIPSE:		//椭圆
@@ -499,6 +510,8 @@ bool SSvgAttributeWnd::LoadObject(SSvgObject *pObj)
 		AddAttribute("stroke-dasharray",pObj);
 		AddAttribute("fill",pObj);
 		AddAttribute("alpha",pObj);
+		AddAttribute("rotate",pObj);
+		AddAttribute("st_val",pObj);//当前图元对应的状态值
 		AddAttribute("ext-attribute",pObj);
 		break;
 	case SSvgObject::TYPE_LINE:			//直线
@@ -513,6 +526,8 @@ bool SSvgAttributeWnd::LoadObject(SSvgObject *pObj)
 		AddAttribute("stroke",pObj);
 		AddAttribute("stroke-width",pObj);
 		AddAttribute("stroke-dasharray",pObj);
+		AddAttribute("rotate",pObj);
+		AddAttribute("st_val",pObj);//当前图元对应的状态值
 		AddAttribute("ext-attribute",pObj);
 		break;
 	case SSvgObject::TYPE_POLYLINE:		//折线
@@ -525,6 +540,8 @@ bool SSvgAttributeWnd::LoadObject(SSvgObject *pObj)
 		AddAttribute("stroke-width",pObj);
 		AddAttribute("stroke-dasharray",pObj);
 		AddAttribute("fill",pObj);
+		AddAttribute("rotate",pObj);
+		AddAttribute("st_val",pObj);//当前图元对应的状态值
 		AddAttribute("ext-attribute",pObj);
 		break;
 	case SSvgObject::TYPE_PATH:			//路径
@@ -537,6 +554,8 @@ bool SSvgAttributeWnd::LoadObject(SSvgObject *pObj)
 		AddAttribute("stroke-width",pObj);
 		AddAttribute("stroke-dasharray",pObj);
 		AddAttribute("fill",pObj);
+		AddAttribute("rotate",pObj);
+		AddAttribute("st_val",pObj);//当前图元对应的状态值
 		AddAttribute("ext-attribute",pObj);
 		break;
 	case SSvgObject::TYPE_PIC:			//图片
@@ -551,6 +570,7 @@ bool SSvgAttributeWnd::LoadObject(SSvgObject *pObj)
 		AddAttribute("href",pObj);
 		AddAttribute("rotate",pObj);
 		AddAttribute("alpha",pObj);
+		AddAttribute("st_val",pObj);//当前图元对应的状态值
 		AddAttribute("ext-attribute",pObj);
 		break;
 	}
@@ -659,6 +679,8 @@ int SSvgAttributeWnd::AddAttribute(SString sName,SSvgObject *pObj)
 	else if(sName == "cursor-x")			sTitle = Q2C(tr("鼠标位置X"));
 	else if(sName == "cursor-y")			sTitle = Q2C(tr("鼠标位置Y"));
 	else if(sName == "rotate")				sTitle = Q2C(tr("旋转角度"));
+	else if(sName == "show_st")				sTitle = Q2C(tr("当前显示状态"));
+	else if(sName == "st_val")				sTitle = Q2C(tr("图元对应状态"));
 	else									sTitle = sName;
 	QTableWidgetItem *p;
 	m_tableWidget->setItem(row,0,(p=new QTableWidgetItem(sName.data())));
@@ -1018,7 +1040,7 @@ void SSvgAttributeWnd::OnCellClicked(int row,int column)
 		{
 			if(m_pPointsEditDlg == NULL)
 			{
-				m_pPointsEditDlg = new SSvgPointsEditDlg();
+				m_pPointsEditDlg = new SSvgPointsEditDlg(this);
 			}
 			m_pPointsEditDlg->m_pSvgWnd = m_pSvgWnd;			
 			m_pPointsEditDlg->ShowEdit(m_pThisObj,sValue);

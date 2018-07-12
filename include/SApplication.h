@@ -466,6 +466,7 @@ public:
 	SApplication *m_pApp;
 	DWORD m_iBeginSOC;//模块开始运行时间
 	SString m_sSoftwareType;//软件型号，用于代理客户及代理间拉手的认证，不同系统名称不允许建立联系
+	SString m_sHmiStyle;//HMI风格
 	SString m_sAgentIp;//代理IP地址，缺省为127.0.0.1
 	int m_iAgentPort;//代理端口
 	bool m_bAgentUplink;//是否为单元间的级联会话

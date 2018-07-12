@@ -38,7 +38,54 @@ public:
 	void SetMovable(bool b);
 	SSvgWnd();
 #ifdef QT_GUI_LIB
+	struct stuEmbeddedWnd
+	{
+		SSvgObject *pObj;//关联对象
+		QWidget *pEmbeddedWnd;//嵌入式窗口
+	};
+
 	SSvgWnd(QWidget *parent);
+	//////////////////////////////////////////////////////////////////////////
+	// 描    述:  向SVG窗口中pObj对象对应位置插入一个嵌入式窗口
+	// 作    者:  邵凯田
+	// 创建时间:  2017-12-7 8:53
+	// 参数说明:  @pObj为等插入对象的窗口
+	//         :  @pWnd为窗口指针
+	// 返 回 值:  true表示成功，false表示失败
+	//////////////////////////////////////////////////////////////////////////
+	bool AddEmbeddedWnd(SSvgObject *pObj,QWidget *pWnd);
+
+	//////////////////////////////////////////////////////////////////////////
+	// 描    述:  重布置所有嵌入式窗口
+	// 作    者:  邵凯田
+	// 创建时间:  2017-12-7 9:07
+	// 参数说明:  void
+	// 返 回 值:  void
+	//////////////////////////////////////////////////////////////////////////
+	void ResizeAllEmbeddedWnd();
+
+	//////////////////////////////////////////////////////////////////////////
+	// 描    述:  重布指定的嵌入式窗口
+	// 作    者:  邵凯田
+	// 创建时间:  2017-12-7 9:10
+	// 参数说明:  @pObj为等插入对象的窗口
+	//         :  @pWnd为窗口指针
+	// 返 回 值:  void
+	//////////////////////////////////////////////////////////////////////////
+	void ResizeEmbeddedWnd(SSvgObject *pObj,QWidget *pWnd);
+
+	QWidget* GetObjEmbeddedWnd(SSvgObject *pObj)
+	{
+		unsigned long pos;
+		stuEmbeddedWnd *p = m_slEmbeddedWnd.FetchFirst(pos);
+		while(p)
+		{
+			if(p->pObj == pObj)
+				return p->pEmbeddedWnd;
+			p = m_slEmbeddedWnd.FetchNext(pos);
+		}
+		return NULL;
+	}
 #endif
 	virtual ~SSvgWnd();
 
@@ -90,6 +137,7 @@ public:
 	{
 		m_iOffsetX = x;
 		m_iOffsetY = y;
+		ResizeAllEmbeddedWnd();
 	}
 	int GetOffsetX(){return m_iOffsetX;}
 	int GetOffsetY(){return m_iOffsetY;}
@@ -342,6 +390,9 @@ private:
 	QSize m_PixmapSizeWnd;//窗口位图大小
 	int m_iPixmapOffX,m_iPixmapOffY;
 	SString m_sRClickPos;
+#ifdef QT_GUI_LIB
+	SPtrList<stuEmbeddedWnd> m_slEmbeddedWnd;
+#endif
 };
 
 

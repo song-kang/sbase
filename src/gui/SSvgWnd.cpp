@@ -40,6 +40,10 @@ SSvgWnd::SSvgWnd()
 	connect(m_pRedrawTimer,SIGNAL(timeout()),this,SLOT(OnTimerRepaint()));
 	setMouseTracking(true);
 	g_GlobalSvgObjCaptionCallback.setAutoDelete(true);
+#ifdef QT_GUI_LIB
+	m_slEmbeddedWnd.setAutoDelete(true);
+	m_slEmbeddedWnd.setShared(true);
+#endif
 }
 
 #ifdef QT_GUI_LIB
@@ -68,6 +72,67 @@ SSvgWnd::SSvgWnd(QWidget *parent) : SWnd(parent)
 	setMouseTracking(true);
 	g_GlobalSvgObjCaptionCallback.setAutoDelete(true);
 }
+//////////////////////////////////////////////////////////////////////////
+// 描    述:  向SVG窗口中pObj对象对应位置插入一个嵌入式窗口
+// 作    者:  邵凯田
+// 创建时间:  2017-12-7 8:53
+// 参数说明:  @pObj为等插入对象的窗口
+//         :  @pWnd为窗口指针
+// 返 回 值:  true表示成功，false表示失败
+//////////////////////////////////////////////////////////////////////////
+bool SSvgWnd::AddEmbeddedWnd(SSvgObject *pObj,QWidget *pWnd)
+{
+	if(pObj == NULL || pWnd == NULL)
+		return false;
+	stuEmbeddedWnd *p = new stuEmbeddedWnd();
+	p->pObj = pObj;
+	p->pEmbeddedWnd = pWnd;
+	m_slEmbeddedWnd.append(p);
+	pWnd->setParent(this);
+	ResizeEmbeddedWnd(p->pObj,p->pEmbeddedWnd);
+	p->pEmbeddedWnd->show();
+	return true;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// 描    述:  重布置所有嵌入式窗口
+// 作    者:  邵凯田
+// 创建时间:  2017-12-7 9:07
+// 参数说明:  void
+// 返 回 值:  void
+//////////////////////////////////////////////////////////////////////////
+void SSvgWnd::ResizeAllEmbeddedWnd()
+{
+	unsigned long pos;
+	stuEmbeddedWnd *p = m_slEmbeddedWnd.FetchFirst(pos);
+	while(p)
+	{
+		ResizeEmbeddedWnd(p->pObj,p->pEmbeddedWnd);
+		p = m_slEmbeddedWnd.FetchNext(pos);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+// 描    述:  重布指定的嵌入式窗口
+// 作    者:  邵凯田
+// 创建时间:  2017-12-7 9:10
+// 参数说明:  @pObj为等插入对象的窗口
+//         :  @pWnd为窗口指针
+// 返 回 值:  void
+//////////////////////////////////////////////////////////////////////////
+void SSvgWnd::ResizeEmbeddedWnd(SSvgObject *pObj,QWidget *pWnd)
+{
+	if(pObj == NULL || pWnd == NULL)
+		return;
+	SRect rect;
+	rect.left = GetCoordX(pObj->GetAttributeF("x"));
+	rect.top = GetCoordY(pObj->GetAttributeF("y"));
+	rect.right = GetCoordX(pObj->GetAttributeF("x")+pObj->GetAttributeF("width"));
+	rect.bottom = GetCoordY(pObj->GetAttributeF("y")+pObj->GetAttributeF("height"));
+	rect.OffsetRect(m_iOffsetX,m_iOffsetY);
+	pWnd->setGeometry(QRect(rect.left, rect.top, rect.width(), rect.height()));
+}
+
 #endif
 SSvgWnd::~SSvgWnd()
 {
@@ -76,10 +141,14 @@ SSvgWnd::~SSvgWnd()
 	SetTempCopyObject(NULL);
 	if(m_pWndAttribute != NULL)
 		delete m_pWndAttribute;
+#ifdef QT_GUI_LIB
+	m_slEmbeddedWnd.clear();
+#endif
 }
 
 void SSvgWnd::OnTimerRepaint()
 {
+	m_iAutoFlashType = m_iAutoFlashType==1?2:1;
 	RedrawWindow();
 }
 
@@ -159,27 +228,27 @@ bool SSvgWnd::OnPaint(SBaseDC *pDC)
 			m_iAutoFlashType = 1;
 			m_pRedrawTimer->start(500);
 		}
-		int soc,usec,ms;
-		SDateTime::getSystemTime(soc,usec);
-		ms = abs((soc-m_iLastDrawSoc)*1000+(usec-m_iLastDrawUSec)/1000);
-		if(m_iAutoFlashType == 1)
-		{
-			if(ms >= 500)
-			{
-				m_iLastDrawSoc = soc;
-				m_iLastDrawUSec = usec;
-				m_iAutoFlashType = m_iAutoFlashType==1?2:1;
-			}
-		}
-		else
-		{
-			if(ms >= 500)
-			{
-				m_iLastDrawSoc = soc;
-				m_iLastDrawUSec = usec;
-				m_iAutoFlashType = m_iAutoFlashType==1?2:1;
-			}
-		}
+// 		int soc,usec,ms;
+// 		SDateTime::getSystemTime(soc,usec);
+// 		ms = abs((soc-m_iLastDrawSoc)*1000+(usec-m_iLastDrawUSec)/1000);
+// 		if(m_iAutoFlashType == 1)
+// 		{
+// 			if(ms >= 450)
+// 			{
+// 				m_iLastDrawSoc = soc;
+// 				m_iLastDrawUSec = usec;
+// 				m_iAutoFlashType = m_iAutoFlashType==1?2:1;
+// 			}
+// 		}
+// 		else
+// 		{
+// 			if(ms >= 450)
+// 			{
+// 				m_iLastDrawSoc = soc;
+// 				m_iLastDrawUSec = usec;
+// 				m_iAutoFlashType = m_iAutoFlashType==1?2:1;
+// 			}
+// 		}
 	}
 	else
 	{
@@ -535,6 +604,7 @@ void SSvgWnd::keyPressEvent(QKeyEvent *e)//按键处理
 		while(p)
 		{
 			p->Offset(sx,sy);
+			ResizeEmbeddedWnd(p,GetObjEmbeddedWnd(p));
 			p = m_SelectedObjList.FetchNext(pos);
 		}
 		RedrawWindow();
@@ -1610,6 +1680,8 @@ int SSvgWnd::OnMouseMove(int nFlag,SPoint point)
 		}
 		p->CalcObjectRect();
 		RedrawWindow();
+		ResizeEmbeddedWnd(p,GetObjEmbeddedWnd(p));
+
 		//RefreshAttributeWnd();
 		m_ptLast = point;
 	}
@@ -1633,6 +1705,7 @@ int SSvgWnd::OnMouseMove(int nFlag,SPoint point)
 		while(p)
 		{
 			p->Offset(sx,sy);
+			ResizeEmbeddedWnd(p,GetObjEmbeddedWnd(p));
 			p = m_SelectedObjList.FetchNext(pos);
 		}
 		setCursor(Qt::SizeAllCursor);
@@ -1688,6 +1761,7 @@ int SSvgWnd::OnMouseMove(int nFlag,SPoint point)
 				m_iOffsetY = wndh - svgh;
 		}
 		RedrawWindow();
+		ResizeAllEmbeddedWnd();
 		m_iMoving = 2;
 	}
 	else
@@ -1926,6 +2000,7 @@ int SSvgWnd::OnMouseWheel(int nFlag,int delta)
 			}
 		}
 		this->RedrawWindow();
+		ResizeAllEmbeddedWnd();
 
 	}
 	return 0;

@@ -46,11 +46,12 @@
 enum e_SDatabase_Type
 {
 	DB_UNKNOWN=0,
-	DB_MYSQL,
-	DB_PGSQL,
-	DB_ORACLE,
-	DB_DAMENG,
-	DB_MDB,
+ 	DB_MYSQL=1,
+  	DB_PGSQL,
+  	DB_ORACLE,
+  	DB_DAMENG,
+  	DB_MDB,
+  	DB_ODBC
 };
 
 //记录类
@@ -237,13 +238,22 @@ public:
 	virtual bool Rollback(){return false;};
 
 	//////////////////////////////////////////////////////////////////////////
-	// 描    述:  从数据库读取指定的大字段内容到缓冲区，缓冲区内容由调用都负责释放
+	// 描    述:  从数据库读取指定的大字段内容到缓冲区，缓冲区由调用都负责使用FreeLobMem函数进行释放
 	// 作    者:  邵凯田
 	// 创建时间:  2015-8-4 14:15
 	// 参数说明:  
 	// 返 回 值:  true/false
 	//////////////////////////////////////////////////////////////////////////
 	virtual bool ReadLobToMem(SString sTable,SString sLobField,SString sWhere,unsigned char* &pBuf,int &iBufLen)=0;
+
+	//////////////////////////////////////////////////////////////////////////
+	// 描    述:  用于释放ReadLobToMem函数产生的缓冲区
+	// 作    者:  邵凯田
+	// 创建时间:  2017-12-1 11:01
+	// 参数说明:  @pBuf为缓冲区指针
+	// 返 回 值:  void
+	//////////////////////////////////////////////////////////////////////////
+	virtual void FreeLobMem(unsigned char* pBuf)=0;
 
 	//////////////////////////////////////////////////////////////////////////
 	// 描    述:  将内存大字段写入数据库
