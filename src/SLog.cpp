@@ -229,6 +229,9 @@ void SLog::setLogFileMaxBackFiles(int files)
 //////////////////////////////////////////////////////////////////////////
 void SLog::setModuleName(const char* name)
 {
+	if (getLog()->m_sModuleName->length() > 0)
+		return;
+
 	*(getLog()->m_sModuleName) = name;
 	int p=getLog()->m_sModuleName->find_last_of('\\',getLog()->m_sModuleName->length());
 	if(p>=0)
@@ -346,6 +349,8 @@ bool SLog::startLogToTCPSvr(char* ip,int port)
 //////////////////////////////////////////////////////////////////////////
 bool SLog::startLogToFile(char* file)	
 {
+	if(getLog()->m_sLogFile->length() > 0)
+		return false;
 	printf("SLog::startLogToFile(%s)\n",file);
 	*(getLog()->m_sLogFile) = file;
 	getLog()->m_bToFile=true;
