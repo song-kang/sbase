@@ -2141,7 +2141,7 @@ bool SApplication::Run(int argc, char* argv[],const char* szDate,const char* szT
 	{
 		//非阻塞方式运行
 #ifndef _WITHOUT_AGENT_CHANNEL_
-		StartAgent(bBlock);
+		//StartAgent(bBlock);
 #endif
 	}
 	return true;
