@@ -260,7 +260,7 @@ int SApi::GetSystemProcess(SStringList &plist,char* sProcNameLike)
 	BOOL status=Process32First(SS,&processinfo);   
 	while(status)   
 	{
-		if(sProcNameLike != NULL && strstr(processinfo.szExeFile,sProcNameLike) == NULL)
+		if(sProcNameLike != NULL && strstr((char*)processinfo.szExeFile,(char*)sProcNameLike) == NULL)
 		{
 			status=Process32Next(SS,&processinfo);   
 			continue;

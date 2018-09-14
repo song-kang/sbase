@@ -80,6 +80,7 @@ bool SService::Stop()
 bool SService::StopAndWait(int iTimeout/*=0*/)
 {
 	Stop();
+	SApi::UsSleep(20000);//防止刚创建(并启动线程)就销毁时产生野线程
 	iTimeout *= 20;
 	int times = 0;
 	while(!IsStoped())

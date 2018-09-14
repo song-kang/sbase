@@ -230,8 +230,7 @@ void SLog::setLogFileMaxBackFiles(int files)
 void SLog::setModuleName(const char* name)
 {
 	if (getLog()->m_sModuleName->length() > 0)
-		return;
-
+		return;//如果已经被设置过一次，忽略以后的再次设置
 	*(getLog()->m_sModuleName) = name;
 	int p=getLog()->m_sModuleName->find_last_of('\\',getLog()->m_sModuleName->length());
 	if(p>=0)
