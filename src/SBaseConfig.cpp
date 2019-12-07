@@ -728,7 +728,6 @@ SBaseConfig* SBaseConfig::SearchChild(SString sGroup)
 			return NULL;
 
 		sNode = SString::GetIdAttribute(i,sGroup,".");
-		sNode = sNode.toLower();
 		//check node name, whether it have index number,'(X)'
 		if(sNode.find("(") > 0 && sNode.find(")",sNode.find("(")+1) > 0)
 		{
@@ -749,6 +748,7 @@ SBaseConfig* SBaseConfig::SearchChild(SString sGroup)
 		}
 		else
 			sAttr = "";
+		sNode = sNode.toLower();
 		id = 0;
 #if 0 //老算法，效率不高
 		pi=0;

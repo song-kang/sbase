@@ -177,6 +177,7 @@ public:
 	inline void* GetUserPtr2(){return m_pUserPtr2;};
 	inline SString GetPeerIp(){return m_sPeerIp;};
 	inline int GetPeerPort(){return m_iPeerPort;};
+	inline SString GetLoginAttr(){return m_sLoginAttr;};
 protected:
 	DWORD m_ValidWord;//是否有效的标记字
 	SLock m_Lock;
@@ -306,7 +307,7 @@ public:
 	virtual void OnDeleteSession(STcpServerSession *pSession){S_UNUSED(pSession);};
 
 	////////////////////////////////////////////////////////////////////////
-	// 描    述:  会话线程接收到报文后的回调虚函数，派生类通过此函数处理即时消息
+	// 描    述:  会话线程接收到报文后的回调虚函数，派生类通过此函数处理即时消息，该函数外面做了会话加锁处理，因此不能使用AddToSend等有锁函数，就直接使用SendFrame
 	// 作    者:  邵凯田
 	// 创建时间:  2011-11-11 13:47
 	// 参数说明:  @pSession为会话实例指针，可以通过指针向对端发送数据

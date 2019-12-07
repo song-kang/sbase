@@ -102,7 +102,7 @@ unsigned char* SConstBuffer::CopyToConstBuffer(unsigned char *pSrcBuf,int iLen)
 const char* SConstBuffer::CopyToConstString(char *pStr,int iLen)
 {
 	if(iLen == 0)
-		iLen = strlen(pStr)+1;
+		iLen = (int)strlen(pStr)+1;
 	else
 		iLen++;
 	const char* p = (const char*)GetConstBuffer(iLen);

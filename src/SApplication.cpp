@@ -1618,7 +1618,7 @@ SApplication::SApplication()
 
 SApplication::~SApplication()
 {
-	if (g_iAppCount <= 1)
+	if(g_iAppCount <= 1)
 	{
 		SLog::WaitForLogEmpty();
 		SLog::quitLog();
@@ -1909,14 +1909,10 @@ bool SApplication::Run(int argc, char* argv[],const char* szDate,const char* szT
 	m_sHomePath = m_sExePath;
 	while(m_sHomePath.right(1) == "\\" || m_sHomePath.right(1) == "/")
 		m_sHomePath = m_sHomePath.left(m_sHomePath.length()-1);
-
 	if(m_sHomePath.right(4) == "\\bin" || m_sHomePath.right(4) == "/bin")
+	{
 		m_sHomePath = m_sHomePath.left(m_sHomePath.length()-4);
-	else if (m_sHomePath.right(6) == "\\Debug" || m_sHomePath.right(6) == "/Debug")
-		m_sHomePath = m_sHomePath.left(m_sHomePath.length()-6);
-	else if (m_sHomePath.right(8) == "\\Release" || m_sHomePath.right(8) == "/Release")
-		m_sHomePath = m_sHomePath.left(m_sHomePath.length()-8);
-
+	}
 	while(m_sHomePath.right(1) == "\\" || m_sHomePath.right(1) == "/")
 		m_sHomePath = m_sHomePath.left(m_sHomePath.length()-1);
 #ifdef WIN32
@@ -1973,7 +1969,7 @@ bool SApplication::Run(int argc, char* argv[],const char* szDate,const char* szT
 				SLog::setLogLevel(SLog::LOG_NONE);
 			else
 				SLog::setLogLevel(SLog::LOG_DEBUG);
-			if(pPrecommand->SearchNodeAttribute("console","open").toLower() == "true")
+			if(pPrecommand->SearchNodeAttribute("concole","open").toLower() == "true")
 				SLog::startLogToConsole();
 			else
 				SLog::stopLogToConsole();
@@ -2141,7 +2137,8 @@ bool SApplication::Run(int argc, char* argv[],const char* szDate,const char* szT
 	{
 		//非阻塞方式运行
 #ifndef _WITHOUT_AGENT_CHANNEL_
-		//StartAgent(bBlock);
+		if(m_bUseAgent)
+			StartAgent(bBlock);
 #endif
 	}
 	return true;

@@ -115,8 +115,10 @@
 	#define NULL 0
 #endif
 
+#ifndef _WIN64
 #ifndef SOCKET 
-#define SOCKET int
+#define SOCKET long
+#endif
 #endif
 
 #ifndef INVALID_SOCKET
@@ -485,7 +487,7 @@ public:
 		}
 		return len;
 #else
-		return Receive(dest,maxLen);
+		return Receive(dest,(int)maxLen);
 #endif
 	}
 
@@ -498,7 +500,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	inline int write(BYTE* dest,size_t maxLen)
 	{
-		return Send((void*)dest,maxLen);
+		return Send((void*)dest,(int)maxLen);
 	}
 
 	////////////////////////////////////////////////////////////////////////

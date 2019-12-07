@@ -192,9 +192,10 @@ using namespace std;
 #endif
 
 
-
+#ifndef _WIN64
 #ifndef SOCKET 
-#define SOCKET int
+#define SOCKET unsigned long
+#endif
 #endif
 
 #ifndef NULL 

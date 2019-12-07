@@ -622,6 +622,31 @@ void CMdbClient::RegisterTriggerCallback(OnMdbClientTrgCallback pFun, void *cbPa
 	m_TrgReg->append(p);
 }
 
+
+//////////////////////////////////////////////////////////////////////////
+// 描    述:  将当前实例下的触发器移动到另一个实例中，并在其中实例，取消本地触发
+// 作    者:  邵凯田
+// 创建时间:  2019-5-3 9:30
+// 参数说明:  @pAnotherMdb
+// 返 回 值:  表示移动的触发器数量
+//////////////////////////////////////////////////////////////////////////
+int CMdbClient::MoveTriggerToAnother(CMdbClient *pAnotherMdb)
+{
+	unsigned long pos;
+	int cnt = 0;
+	m_TrgReg->lock();
+	stuMdbClientTriggerReg *p = m_TrgReg->FetchFirst(pos);
+	while (p)
+	{
+		cnt++;
+		pAnotherMdb->RegisterTriggerCallback(p->pFun,p->cbParam,p->sTableName,p->iTriggerFlag);
+		p = m_TrgReg->FetchNext(pos);
+	}
+	m_TrgReg->clear();
+	m_TrgReg->unlock();
+	return cnt;
+}
+
 ////////////////////////////////////////////////////////////////////////
 // 描    述:  删除触发回调函数
 // 作    者:  邵凯田

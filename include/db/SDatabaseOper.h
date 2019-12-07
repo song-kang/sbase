@@ -53,8 +53,6 @@ public:
 		if(pSession->GetSessionSock() != NULL)
 		{
 			pSession->GetSessionSock()->SetRecvBufSize(1024*1024);
-			pSession->GetSessionSock()->SetRecvBufSize(1024*1024*5);
-			pSession->GetSessionSock()->SetRecvBufSize(1024*1024*10);
 		}
 	};
 
@@ -79,9 +77,9 @@ public:
 	// 作    者:  邵凯田
 	// 创建时间:  2016-8-11 18:51
 	// 参数说明:  @sqls，表示SQL（DML）语句，多个SQL通过{$SQL_SEP$}分隔
-	// 返 回 值:  void
+	// 返 回 值:  返回成功执行SQL的数量,<0表示执行失败
 	//////////////////////////////////////////////////////////////////////////
-	virtual void OnProcessSqls(SString &sqls)=0;
+	virtual int OnProcessSqls(SString &sqls)=0;
 
 	////////////////////////////////////////////////////////////////////////
 	// 描    述:  会话线程接收到报文后的回调虚函数，派生类通过此函数处理即时消息
@@ -97,7 +95,9 @@ public:
 		if(pPackage->m_wFrameType == 1 && pPackage->m_iAsduLen > 0)
 		{
 			SString str = SString::toString((char*)pPackage->m_pAsduBuffer,pPackage->m_iAsduLen);
-			OnProcessSqls(str);
+			int cnt = OnProcessSqls(str);
+			str.sprintf("finish_cnt=%d;",cnt);
+			pSession->SendFrame(str,2);
 		}
 		return true;
 	}
@@ -131,7 +131,15 @@ public:
 			S_UNUSED(pPackage);
 			return true;
 		};
-	};	
+	};
+	struct stuDmlPublishThreadParam
+	{
+		SDatabaseOper *pThis;
+		SString pub_ip;
+		int pub_port;
+		SPtrList<SString> *pub_dml_sqls;
+		bool is_master;
+	};
 
 	SDatabaseOper();
 	~SDatabaseOper();
@@ -146,6 +154,16 @@ public:
 	void SetDatabasePool(SDatabasePool<SDatabase> *pPool);
 
 	SDatabasePool<SDatabase>* GetDatabasePool(){return m_pDatabasePool;};
+
+	//////////////////////////////////////////////////////////////////////////
+	// 描    述:  取当前活动的连接池
+	// 作    者:  邵凯田
+	// 创建时间:  2019-5-3 9:36
+	// 参数说明:  
+	// 返 回 值:  
+	//////////////////////////////////////////////////////////////////////////
+	SDatabasePool<SDatabase>* GetActiveDatabasePool(){return m_pActionDatabasePool;};
+
 
 	//////////////////////////////////////////////////////////////////////////
 	// 描    述:  设备备用数据库连接池
@@ -220,6 +238,15 @@ public:
 	bool Start(bool bGlobalSync=false);
 
 	//////////////////////////////////////////////////////////////////////////
+	// 描    述:  将当前进程设置为全局同步模式
+	// 作    者:  邵凯田
+	// 创建时间:  2019-4-24 21:35
+	// 参数说明:  
+	// 返 回 值:  
+	//////////////////////////////////////////////////////////////////////////
+	void SetGlobalSync(){m_bGlobalSync = true;};
+
+	//////////////////////////////////////////////////////////////////////////
 	// 描    述:  退出数据库同步服务
 	// 作    者:  邵凯田
 	// 创建时间:  2015-7-30 9:32
@@ -227,6 +254,8 @@ public:
 	// 返 回 值:  true/false
 	//////////////////////////////////////////////////////////////////////////
 	bool Quit();
+
+	bool WaitQuit();
 
 	//////////////////////////////////////////////////////////////////////////
 	// 描    述:  通过文件更新大字段内容
@@ -292,6 +321,24 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	bool StartDmlPublish(SString sIp,int iTcpPort);
 
+	//////////////////////////////////////////////////////////////////////////
+	// 描    述:  设备DML发布的最大缓冲数量,缺省500000
+	// 作    者:  邵凯田
+	// 创建时间:  2019-4-23 19:23
+	// 参数说明:  @max为最大缓冲SQL的数量,0表示不限制数量
+	// 返 回 值:  void
+	//////////////////////////////////////////////////////////////////////////
+	static void SetDmlPublishMaxBufferSize(int max);
+
+	//////////////////////////////////////////////////////////////////////////
+	// 描    述:  设备DML发布数据包的大小，缺省65536
+	// 作    者:  邵凯田
+	// 创建时间:  2019-4-23 19:30
+	// 参数说明:  @bytes为单次最大发送的数据包字节大小
+	// 返 回 值:  void
+	//////////////////////////////////////////////////////////////////////////
+	static void SetDmlPublishPackageSize(int bytes);
+
 private:
 	//////////////////////////////////////////////////////////////////////////
 	// 描    述:  数据库同步线程
@@ -310,6 +357,15 @@ private:
 	// 返 回 值:  NULL
 	//////////////////////////////////////////////////////////////////////////
 	static void* ThreadDmlPublish(void* lp);
+
+	//////////////////////////////////////////////////////////////////////////
+	// 描    述:  保存所有的历史DML缓冲记录到数据库
+	// 作    者:  邵凯田
+	// 创建时间:  2019-4-24 0:04
+	// 参数说明:  void
+	// 返 回 值:  void
+	//////////////////////////////////////////////////////////////////////////
+	void SaveHisDmlSqls(SPtrList<SString> *pub_dml_sqls,SDatabase *pDb);
 
 	//////////////////////////////////////////////////////////////////////////
 	// 描    述:  添加历史操作SQL记录到指定连接池对应的另一个连接池，当另一个池为空时忽略此操作
@@ -337,13 +393,12 @@ private:
 	SDatabasePool<SDatabase> *m_pSlaveDatabasePool;	//备用数据库连接池
 	SDatabasePool<SDatabase> *m_pActionDatabasePool;//活动的数据库连接池，为主、备连接池之一，优先主连接池，主连接池异常时切换为备连接池，主恢复时则恢复为主
 	bool m_bQuit;									//是否退出服务
+	int m_iThreads;
 	SStringList m_DbSyncSqls;						//主数据库同步更新SQL，UPDATE_BLOB=开头的表示大字段同步，后面跟随大字段属性串：table=XX{$SEP$}field=XX{$SEP$}where=XX{$SEP$}，从备库取文件设置到主库
 	SStringList m_SlaveDbSyncSqls;					//备用数据库同步更新SQL，同上
 	SWait m_Wait;									//同步等待信号
 	bool m_bGlobalSync;								//表示是否开启全局库同步，true表示打开，false表示关闭
 													//一般情况下，一个系统中仅需要一个进程开启该同步，该进程应确保长期处于运行状态
-	SString m_sDmlPublishServerIp;					//发布服务器IP地址
-	int m_iDmlPublishServerTcpPort;					//发布服务器TCP端口号
 	SPtrList<SString> m_sDmlSqlBuffered;			//当前缓存的SQL
 	bool m_bDmlPublishThreadRuning;					//DML发布线程是否正在运行
 };

@@ -1,0 +1,36 @@
+CC =/usr/am1808/arm-2009q1/bin/arm-none-linux-gnueabi-g++
+LIB =/usr/am1808/arm-2009q1/lib/gcc/arm-none-linux-gnueabi/4.3.3
+
+CC_INCLUDES = -I./
+
+CC_FLAGS    = $(CC_INCLUDES) -pipe -w -O3 -pipe -D_ARM
+CC_FLAGS_D  = $(CC_INCLUDES) -pipe -Wall -O2 -g -pipe -D_ARM
+CC_COMPLIE  = $(CC_INCLUDES) $(CC_FLAGS) $<
+CC_COMPLIE_D= $(CC_INCLUDES) $(CC_FLAGS_D) $<
+CC_LINK     = -L$(LIB) -lpthread -lm -lrt
+
+CC_TARGET   = test
+INSTALL_PATH= ./
+
+RM = rm -rf
+LN = ln
+CP = cp -f
+
+SRCS =  *.cpp yscomm/*.cpp
+OBJS =  *.o 
+
+all:
+		$(CC) -c $(SRCS) $(CC_COMPLIE)
+
+
+debug:
+		$(CC) -c $(SRCS) $(CC_COMPLIE_D)
+
+
+clean:
+		$(RM) *.o
+		$(RM) *.d
+		$(RM) $(CC_TARGET)
+
+install:
+		$(CP) $(CC_TARGET) $(INSTALL_PATH)/$(CC_TARGET)

@@ -40,7 +40,7 @@ bool SSntpClient::GetTime(SDateTime &now,bool bSetToSystem/*=true*/)
 	stuSNTPPackage sntp;
 	SSocket udp;
 	sockaddr_in sa;
-	struct timeval tTime;
+	struct ntp_timeval32 tTime;
 	udp.SetTimeout(1000,1000);
 	//long cha=0xc9b34d23-0x4608cea3;
 	//long ms_cha=0xABB90C58-0x27FB7940;//0x83BD9318  2210239256

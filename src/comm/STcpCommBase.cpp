@@ -233,8 +233,8 @@ bool STcpCommBase::SendFrame(SSocket *pS,SString &sHead,WORD wFrameType/*=0*/,BY
 	if(m_iSendSleep != 0)
 		SApi::UsSleep(m_iSendSleep);
 #ifdef _DEBUG
- 	LOGDEBUG("SEND (len=%d,type=%d): sHead=%s, HEX=%s",10+slen+iAsduLen,wFrameType,sHead.left(1000).data(),
- 		pAsduBuffer == NULL ? "" : (SString::HexToStr(pAsduBuffer, iAsduLen>100 ? 100 : iAsduLen).data()));
+//  	LOGDEBUG("SEND (len=%d,type=%d): sHead=%s, HEX=%s",10+slen+iAsduLen,wFrameType,sHead.left(1000).data(),
+//  		pAsduBuffer == NULL ? "" : (SString::HexToStr(pAsduBuffer, iAsduLen>100 ? 100 : iAsduLen).data()));
 #endif
 	return true;
 }
@@ -314,8 +314,8 @@ bool STcpCommBase::SendFrame(SSocket *pS,WORD wFrameType/*=0*/,BYTE *pAsduBuffer
 	}
 	*/
 #ifdef _DEBUG
- 	LOGDEBUG("SEND (len=%d,type=%d): sHead=%s, HEX=%s",10+iAsduLen,wFrameType,"",
- 		pAsduBuffer == NULL ? "" : (SString::HexToStr(pAsduBuffer, iAsduLen>100 ? 100 : iAsduLen).data()));
+//  	LOGDEBUG("SEND (len=%d,type=%d): sHead=%s, HEX=%s",10+iAsduLen,wFrameType,"",
+//  		pAsduBuffer == NULL ? "" : (SString::HexToStr(pAsduBuffer, iAsduLen>100 ? 100 : iAsduLen).data()));
 #endif
 	return true;
 }
@@ -409,7 +409,7 @@ int STcpCommBase::RecvFrame(SSocket *pS,stuSTcpPackage* &pPackage)
 			return -1;
 		pS->Close();
 #ifdef _DEBUG
-		LOGDEBUG("RECV(len:%d):%s\n",ret,SString::HexToStr((BYTE*)&head,ret).data());
+//		LOGDEBUG("RECV(len:%d):%s\n",ret,SString::HexToStr((BYTE*)&head,ret).data());
 #endif
 		return -1;
 	}
@@ -500,8 +500,8 @@ int STcpCommBase::RecvFrame(SSocket *pS,stuSTcpPackage* &pPackage)
 		}
 	}
 #ifdef _DEBUG
- 	LOGDEBUG("RECV (len:%d,type=%d,ret=%d):%s HEX:%s", pPackage->m_iAsduLen, pPackage->m_wFrameType,ret, pPackage->m_sHead.left(1000).data(),
- 		pPackage->m_pAsduBuffer == NULL ? "" : (SString::HexToStr(pPackage->m_pAsduBuffer, pPackage->m_iAsduLen>100 ? 100 : pPackage->m_iAsduLen).data()));
+//  	LOGDEBUG("RECV (len:%d,type=%d,ret=%d):%s HEX:%s", pPackage->m_iAsduLen, pPackage->m_wFrameType,ret, pPackage->m_sHead.left(1000).data(),
+//  		pPackage->m_pAsduBuffer == NULL ? "" : (SString::HexToStr(pPackage->m_pAsduBuffer, pPackage->m_iAsduLen>100 ? 100 : pPackage->m_iAsduLen).data()));
 #endif
 	return 10+slen+pPackage->m_iAsduLen;
 }

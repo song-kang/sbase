@@ -112,7 +112,10 @@ bool SMySQL::DisConnect()
 bool SMySQL::TestConnect()
 {
 	if(m_iTestTimes>0)
+	{
+		SetStatus(DBERROR);
 		return false;
+	}
 	m_iTestTimes ++;
 	if(SelectInto("select 'skt'") != "skt")
 	{

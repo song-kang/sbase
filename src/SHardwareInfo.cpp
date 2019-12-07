@@ -37,10 +37,11 @@ SHardwareInfo::~SHardwareInfo()
 //////////////////////////////////////////////////////////////////////////
 SString SHardwareInfo::GetCpuSn()
 {
-	unsigned long s1,s2,s3,s4;    
+	unsigned long s1=0,s2=0,s3=0,s4=0;    
 	SString sn;
 #ifdef WIN32
 	//unsigned int s1,s2,s3,s4;
+	/*
 	__asm{
 		mov eax,01h   //eax=1:»°CPU–Ú¡–∫≈
 			xor edx,edx
@@ -56,7 +57,7 @@ SString SHardwareInfo::GetCpuSn()
 			mov s3,edx
 			mov s4,ecx
 	}
-
+	*/
 #else
 	char   sel;     
 	asm volatile     

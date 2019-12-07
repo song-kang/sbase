@@ -168,7 +168,7 @@ bool SXmlConfig::ReadConfig(SString sXmlFile)
 #ifdef WIN32
 			//Windows下只需转换一次
 			SString::Utf82Gb(sXMLData,filelen+1);
-			filelen = strlen(sXMLData);
+			filelen = (int)strlen(sXMLData);
 #else
 			//char *pSrc = sXMLData;
 			SString sTemp,sNew;
@@ -355,9 +355,21 @@ bool SXmlConfig::LoadXmlByText(const char * szXmlText)
 						return false;
 					}
 					//认为是原始文本
-					sNodeValue = SString::toString(szXmlText,pStr-szXmlText);
+					sNodeValue = SString::toString(szXmlText,(int)(pStr-szXmlText));
 					pParentNode->SetNodeValueEx(sNodeValue.data());
 					szXmlText = pStr + 3;
+					break;
+				}
+				if(strstr(szXmlText,"!DOCTYPE ") == szXmlText)
+				{
+					pStr = strstr((char*)szXmlText,">");
+					if(pStr == NULL)
+					{
+						//未关闭的DOCTYPE文本
+						delete[] sAttrValue;
+						return false;
+					}
+					szXmlText = pStr + 1;
 					break;
 				}
 				szXmlText = strstr(szXmlText,"-->");
@@ -798,7 +810,7 @@ bool SXmlConfig::SaveNodeText(SString &sXml,SBaseConfig *pNode,int &level)
 	SString sAttrName,sAttrVal;
 	int cols = pNode->GetAttributeCount();
 	for(i=0;i<cols;i++)
-	{
+	{	
 		sAttrName = pNode->GetAttributeName(i);
 		if(sAttrName.length() > 0)
 		{

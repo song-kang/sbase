@@ -229,13 +229,13 @@ void SLog::setLogFileMaxBackFiles(int files)
 //////////////////////////////////////////////////////////////////////////
 void SLog::setModuleName(const char* name)
 {
-	if (getLog()->m_sModuleName->length() > 0)
+	if(getLog()->m_sModuleName->length() > 0)
 		return;//如果已经被设置过一次，忽略以后的再次设置
 	*(getLog()->m_sModuleName) = name;
-	int p=getLog()->m_sModuleName->find_last_of('\\',getLog()->m_sModuleName->length());
+	int p=(int)getLog()->m_sModuleName->find_last_of('\\',getLog()->m_sModuleName->length());
 	if(p>=0)
 		*(getLog()->m_sModuleName) = getLog()->m_sModuleName->substr(p+1,getLog()->m_sModuleName->length()-p-1);
-	p=getLog()->m_sModuleName->find_last_of('/',getLog()->m_sModuleName->length());
+	p=(int)getLog()->m_sModuleName->find_last_of('/',getLog()->m_sModuleName->length());
 	if(p>=0)
 		*(getLog()->m_sModuleName) = getLog()->m_sModuleName->substr(p+1,getLog()->m_sModuleName->length()-p-1);
 #ifdef WIN32
@@ -274,7 +274,7 @@ bool SLog::startLogToUDPSvr(char* ip,int port)
 		WSADATA WSAData;
 		WSAStartup( MAKEWORD( 1, 1 ), &WSAData );
 	#endif
-	p->m_hUdpSocket = ::socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
+	p->m_hUdpSocket = (SOCKET)::socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 	if(p->m_hUdpSocket == INVALID_SOCKET)
 	{
 	  p->m_hUdpSocket = /*NULL*/0;
@@ -306,7 +306,7 @@ bool SLog::startLogToTCPSvr(char* ip,int port)
 		WSADATA WSAData;
 		WSAStartup( MAKEWORD( 1, 1 ), &WSAData );
 	#endif
-	p->m_hTcpSocket = ::socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
+	p->m_hTcpSocket = (SOCKET)::socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
 	printf("log tcp af=%d,type=%d,protocol=%d,handle=%X\n",AF_INET,SOCK_STREAM,IPPROTO_TCP,p->m_hTcpSocket);
 	if(p->m_hTcpSocket == INVALID_SOCKET)
 	{
@@ -512,7 +512,7 @@ void SLog::init()
 		//bInited = true;
 #ifdef WIN32
 		HANDLE h; 
-		h = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)(int)ThreadLog, (LPVOID)pThis, 0, 0); 
+		h = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)(void*)ThreadLog, (LPVOID)pThis, 0, 0); 
 		CloseHandle(h); 
 #else
 		pthread_t t=0; 
@@ -550,13 +550,13 @@ void SLog::logHead(short logtype,const char* file,int line,const char* func)
 	m_log.logtype = (char)logtype;
 	str = file;
 	int p;
-	p=str.find_last_of('\\',str.length());
+	p=(int)str.find_last_of('\\',str.length());
 	if(p>=0)
 	{
 		p++;
 		str = str.substr(p,str.length()-p);
 	}
-	p=str.find_last_of('/',str.length());
+	p=(int)str.find_last_of('/',str.length());
 	if(p>=0)
 	{
 		p++;
@@ -612,7 +612,7 @@ void SLog::logBody(const char * cformat, ...)
         printf("SLog error!!! Log body text overflow!!!\n");
         exit(0);
     }
-	int slen = strlen(m_log.msg);
+	int slen = (int)strlen(m_log.msg);
 	if(slen > 0)
 	{
 		char *pCh = &m_log.msg[slen-1];
@@ -689,7 +689,6 @@ void* SLog::ThreadLog(void* lp)
 	sigemptyset (&signal_mask);
 	sigaddset (&signal_mask, SIGPIPE);
 #endif
-
 	SLog *pThis = (SLog*)lp;
 	char *buf = new char[20480];
 	stuLog *p;
@@ -741,7 +740,7 @@ void* SLog::ThreadLog(void* lp)
 
 		if(pThis->m_bToLogUDPSvr)
 		{
-			p->size = (sizeof(stuLog) - sizeof(p->msg))+strlen(p->msg);
+			p->size = (int)((sizeof(stuLog) - sizeof(p->msg))+strlen(p->msg));
 			int size = p->size;
 			p->size = htonl(p->size);
 			//LOG_SWAP_DWORD(p->size);
@@ -758,7 +757,7 @@ void* SLog::ThreadLog(void* lp)
 		}
 		if(pThis->m_bToLogTCPSvr)
 		{
-			p->size = (sizeof(stuLog) - sizeof(p->msg))+strlen(p->msg);
+			p->size = (int)((sizeof(stuLog) - sizeof(p->msg))+strlen(p->msg));
 			int size = p->size;
 			p->size = htonl(p->size);
 			//LOG_SWAP_DWORD(p->size);
@@ -965,7 +964,7 @@ void SLog::RunLogCommand(char* pStr)
 	else if(str.substr(0,11) == "log to tcp " || str.substr(0,11) == "log to TCP ")
 	{
 		string ip = str.substr(11);
-		int port=ip.find(":");
+		int port=(int)ip.find(":");
 		if(port > 0)
 		{
 			port = atoi(ip.substr(ip.find(":")+1).c_str());
@@ -980,7 +979,7 @@ void SLog::RunLogCommand(char* pStr)
 	else if(str.substr(0,11) == "log to udp " || str.substr(0,11) == "log to UDP ")
 	{
 		string ip = str.substr(11);
-		int port=ip.find(":");
+		int port=(int)ip.find(":");
 		if(port > 0)
 		{
 			port = atoi(ip.substr(ip.find(":")+1).c_str());

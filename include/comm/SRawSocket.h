@@ -54,8 +54,11 @@
 	};
 
 #endif
+
+#ifndef _WIN64
 #ifndef SOCKET
-#define SOCKET int
+#define SOCKET long
+#endif
 #endif
 
 #include "../SApi.h"

@@ -189,7 +189,7 @@ void SSvgPainter::DrawObject(SBaseDC *pDC, SSvgObject *pObj, int x, int y,bool b
 			SSvgObject *pSub = p->GetChild();
 			SString show_st = p->GetAttribute("show_st");//当前层的show_st只对第一层子节点的st_val生效
 			if(show_st.length() == 0)
-		DrawObject(pDC,p->GetChild(),x+cx,y+cy);
+				DrawObject(pDC,p->GetChild(),x+cx,y+cy);
 			else
 			{
 				SString sub_show_st;
@@ -220,7 +220,7 @@ void SSvgPainter::DrawObject(SBaseDC *pDC, SSvgObject *pObj, int x, int y,bool b
 		}
 #endif
 		if(bOnlyOne)
-			break;
+			break;		
 		p = p->GetNext();
 		continue;
 
@@ -982,6 +982,8 @@ void SSvgPainter::DrawRect(SBaseDC *pDC, SSvgObject *pObj, int x, int y)
 	}
 	if(!(m_pSvgDataModel && m_pSvgDataModel->GetViewLineColor(pObj,sLineColor)))
 		sLineColor = GetColorByString(GetAttributeByLevel(pObj,"stroke"));
+	if(!bFill && pObj->GetAttributeI("stroke-width") == 0)
+		return;
 	float line_width = pObj->GetAttributeI("stroke-width")*m_fScale;
 	if(line_width < 1)
 		line_width = 1;
@@ -1167,6 +1169,8 @@ void SSvgPainter::DrawSvgText(SBaseDC *pDC, SSvgObject *pObj, int x, int y)
 	{
 		//memset(&font,0,sizeof(font));
 		font.m_iHeight = pObj->GetAttributeF("font-size")*m_fScale;//GetCoordX(pObj->GetAttributeF("font-size"));
+		if(font.m_iHeight <= 1)
+			return;//忽略没有大小的文字
 		font.m_iWidth = 0;
 	#ifdef QT_GUI_LIB
 		if(weight=="bold")
@@ -1242,6 +1246,8 @@ void SSvgPainter::DrawRectText(SBaseDC *pDC, SSvgObject *pObj, int x, int y)
 	{
 		//memset(&font,0,sizeof(font));
 		font.m_iHeight = GetCoord(pObj->GetAttributeF("font-size"));
+		if(font.m_iHeight <= 1)
+			return;//忽略没有大小的文字
 		font.m_iWidth = 0;
 #ifdef QT_GUI_LIB
 		if(weight=="bold")
@@ -1397,6 +1403,8 @@ void SSvgPainter::DrawEllipse(SBaseDC *pDC, SSvgObject *pObj, int x, int y)
 	}
 	if(!(m_pSvgDataModel && m_pSvgDataModel->GetViewLineColor(pObj,sLineColor)))
 		sLineColor = GetColorByString(GetAttributeByLevel(pObj,"stroke"));
+	if(!bFill && pObj->GetAttributeI("stroke-width") == 0)
+		return;
 	float line_width = pObj->GetAttributeI("stroke-width")*m_fScale;
 	if(line_width < 1)
 		line_width = 1;

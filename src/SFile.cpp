@@ -234,7 +234,7 @@ long SFile::readBlock(BYTE *pBuff, int maxSize)
 {
 	if(m_fp == 0)
 		return -1;
-	return fread(pBuff,1,maxSize, m_fp);
+	return (long)fread(pBuff,1,maxSize, m_fp);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -275,7 +275,7 @@ long SFile::writeBlock(BYTE *pBuff, int size)
 {
 	if(m_fp == 0)
 		return -1;
-	return fwrite(pBuff,1,size, m_fp);
+	return (long)fwrite(pBuff,1,size, m_fp);
 }
 
 ////////////////////////////////////////////////////////////////////////

@@ -615,8 +615,8 @@ bool STcpClientBase::SendFrame(SString &sHead,WORD wFrameType,BYTE *pAsduBuffer,
 	ret = STcpCommBase::SendFrame(&m_Socket,sHead,wFrameType,pAsduBuffer,iAsduLen);
 	unlock();
 #ifdef _DEBUG
-	LOGDEBUG("SEND %s:%d(len:%d,type=%d,ret=%d):%s HEX:%s", m_sServerIp.data(), m_iServerPort, iAsduLen, wFrameType, ret, sHead.left(1000).data(), 
-		pAsduBuffer==NULL?"":(SString::HexToStr(pAsduBuffer,iAsduLen>100?100:iAsduLen).data()));
+// 	LOGDEBUG("SEND %s:%d(len:%d,type=%d,ret=%d):%s HEX:%s", m_sServerIp.data(), m_iServerPort, iAsduLen, wFrameType, ret, sHead.left(1000).data(), 
+// 		pAsduBuffer==NULL?"":(SString::HexToStr(pAsduBuffer,iAsduLen>100?100:iAsduLen).data()));
 #endif
 	return ret;
 }
@@ -641,8 +641,8 @@ int STcpClientBase::RecvFrame(stuSTcpPackage* &pPackage)
 			m_pWait->post();
 	}
 #ifdef _DEBUG
-	LOGDEBUG("RECV %s:%d(len:%d,type=%d,ret=%d):%s HEX:%s", m_sServerIp.data(), m_iServerPort, pPackage->m_iAsduLen, pPackage->m_wFrameType,ret, pPackage->m_sHead.left(1000).data(),
-		pPackage->m_pAsduBuffer == NULL ? "" : (SString::HexToStr(pPackage->m_pAsduBuffer, pPackage->m_iAsduLen>100 ? 100 : pPackage->m_iAsduLen).data()));
+// 	LOGDEBUG("RECV %s:%d(len:%d,type=%d,ret=%d):%s HEX:%s", m_sServerIp.data(), m_iServerPort, pPackage->m_iAsduLen, pPackage->m_wFrameType,ret, pPackage->m_sHead.left(1000).data(),
+// 		pPackage->m_pAsduBuffer == NULL ? "" : (SString::HexToStr(pPackage->m_pAsduBuffer, pPackage->m_iAsduLen>100 ? 100 : pPackage->m_iAsduLen).data()));
 #endif
 	return ret;
 }

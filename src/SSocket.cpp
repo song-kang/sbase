@@ -195,7 +195,7 @@ bool SSocket::Create(int af, int type, int protocol)
 	#endif
 	m_iAF = af;
 	m_iSocketType = type;
-	m_hSocket = ::socket(af,type,protocol);
+	m_hSocket = (SOCKET)::socket(af,type,protocol);
 
 	if(m_hSocket == INVALID_SOCKET)
 	{
@@ -432,18 +432,24 @@ int SSocket::Ping(char *sIp,int &ms,int &ttl)
 	}
 	ECHOREPLY echoReply;
 	sockaddr_in in;
-	nRet = skt.RecvFrom(&echoReply,sizeof(ECHOREPLY),in);
-	if(nRet <= 0)
+	while (true)
 	{
-		return 1004;
-	}
-	SDateTime::getSystemTime(soc2,usec2);
-	ttl = echoReply.ipHdr.TTL;
-	ms = (soc2-soc1)*1000+(usec2-usec1)/1000;
-	SString ip = sIp;
-	if(ip != inet_ntoa(echoReply.ipHdr.iaSrc))
-	{
-		return 1005;
+		nRet = skt.RecvFrom(&echoReply, sizeof(ECHOREPLY), in);
+		if (nRet <= 0)
+		{
+			return 1004;
+		}
+		SDateTime::getSystemTime(soc2, usec2);
+		ttl = echoReply.ipHdr.TTL;
+		ms = (soc2 - soc1) * 1000 + (usec2 - usec1) / 1000;
+		if (ms >= 5000)
+			return 1006;
+		SString ip = sIp;
+		if (ip != inet_ntoa(echoReply.ipHdr.iaSrc))
+		{
+			continue;//return 1005;
+		}
+		break;
 	}
 	return 0;
 }
@@ -738,9 +744,9 @@ bool SSocket::Accept(SSocket &newSocket)
 	sockaddr_in acc_sin;
 	int acc_sin_len=sizeof(acc_sin);
 #ifdef WIN32
-	SOCKET sock = ::accept(m_hSocket, (sockaddr*)&acc_sin, (int *)&acc_sin_len);
+	SOCKET sock = (SOCKET)::accept(m_hSocket, (sockaddr*)&acc_sin, (int *)&acc_sin_len);
 #else
-	SOCKET sock = ::accept(m_hSocket, (sockaddr*)&acc_sin, (socklen_t *)&acc_sin_len);
+	SOCKET sock = (SOCKET)::accept(m_hSocket, (sockaddr*)&acc_sin, (socklen_t *)&acc_sin_len);
 #endif
 	if(sock == INVALID_SOCKET)
 	{

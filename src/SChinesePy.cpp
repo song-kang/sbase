@@ -7745,8 +7745,8 @@ bool gChinesePyMatchFun(char *pPyTable,char *pCh)
 //////////////////////////////////////////////////////////////////////////
 bool SChinesePy::IsMatchText(char *sSrcText,char *sFilterText)
 {
-	int iSrcLen = strlen(sSrcText);
-	int iFilterLen = strlen(sFilterText);
+	int iSrcLen = (int)strlen(sSrcText);
+	int iFilterLen = (int)strlen(sFilterText);
 	if(iSrcLen == 0 || iFilterLen == 0 || strstr(sSrcText,sFilterText) != NULL)
 		return true;
 	int iSrcPos;

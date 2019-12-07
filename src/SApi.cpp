@@ -871,8 +871,8 @@ void SApi::GetMemStatus(int &iMemAll,int &iMemUsed,int &iMemFree)//È¡ÎïÀíÄÚÈÝµÄ×
 #ifdef WIN32
 	MEMORYSTATUS m_MemStat;
 	GlobalMemoryStatus(&m_MemStat);
-	iMemAll = m_MemStat.dwTotalPhys/1024;
-	iMemFree= m_MemStat.dwAvailPhys/1024;
+	iMemAll = (int)m_MemStat.dwTotalPhys/1024;
+	iMemFree= (int)m_MemStat.dwAvailPhys/1024;
 	iMemUsed= iMemAll - iMemFree;
 #else
 	///proc/meminfo
@@ -939,8 +939,8 @@ bool SApi::GetMemStatusByPid(int iPid,int &iPhysicMemK,int &iVirtualMemK)
 		PROCESS_MEMORY_COUNTERS pmc;
 		if (GetProcessMemoryInfo(hProcess, &pmc, sizeof(pmc)))
 		{
-			iPhysicMemK = pmc.WorkingSetSize/1024;
-			iVirtualMemK = pmc.PagefileUsage/1024;
+			iPhysicMemK = (int)pmc.WorkingSetSize/1024;
+			iVirtualMemK = (int)pmc.PagefileUsage/1024;
 		}
 		return true;
 	}
@@ -1252,7 +1252,7 @@ SString SApi::GenerateCRCByFile(SString filename,SString &err)
 	}
 	fseek(fp,0,SEEK_SET);
 	unsigned char *pBuf = new unsigned char[len];
-	int ret = fread(pBuf,1,len,fp);
+	int ret = (int)fread(pBuf,1,len,fp);
 	fclose(fp);
 	if(ret != len)
 	{

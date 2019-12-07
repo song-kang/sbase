@@ -76,7 +76,7 @@ void OdbField::SetSize(ub2 w,int once_rows/*=1*/)
 
 void OdbField::Set(string cs)
 {
-    wLen=cs.size()+1;
+    wLen=(ub2)cs.size()+1;
     SetSize(wLen);
     pBuffer=(dvoid*)cs.c_str();
 }
@@ -132,7 +132,7 @@ void OdbRecordSet::RemoveAll()
 
 int OdbRecordSet::GetFieldCount()
 {
-    return paFields.size();
+    return (int)paFields.size();
 }
 
 int OdbRecordSet::Find(const string &csName)
@@ -201,7 +201,7 @@ void OdbParam::Set(string cs)
     }
     else
     {
-		wLen=cs.size()+1;
+		wLen=(ub2)cs.size()+1;
 		SetSize(wLen);
 		memcpy(pVar, (dvoid*)cs.c_str(), cs.size());
     }
@@ -430,7 +430,7 @@ bool COracleDataBase::ConnectDataBase(const char* UserName,const char* PassWord,
 	}
     //创建访问数据服务的路径
 //	OCIServerAttach(srvhp, errhp, (text *)0, 0, OCI_DEFAULT);
-    status=OCIServerAttach( srvhp, errhp, (text *)DbName, strlen(DbName), 0);
+    status=(sword)OCIServerAttach( srvhp, errhp, (text *)DbName, (sb4)strlen(DbName), 0);
 	if(status!=0)
 	{
 		errText=checkerr(errhp,status);
@@ -538,7 +538,7 @@ long COracleDataBase::Select(const std::string Smt,OdbRecordSet &rs,long &hpSele
 		return -1;
 	}
     //if(status!=0){	errText=checkerr(errhp,status);return -1;}   
-    status=OCIStmtPrepare(hpStmt,errhp,(text*) buff,strlen(buff),OCI_NTV_SYNTAX,OCI_DEFAULT);
+    status=(ub4)OCIStmtPrepare(hpStmt,errhp,(text*) buff,(ub4)strlen(buff),OCI_NTV_SYNTAX,OCI_DEFAULT);
 	if(status!=0)
 	{
 		errText=checkerr(errhp,status);
@@ -766,7 +766,7 @@ long COracleDataBase::SqlExecute(const std::string Smt)
 		return -1;
 	}
 	//if(status!=0) {errText=checkerr(errhp,status);return -1;}   
-    status=OCIStmtPrepare(tmpStmt,errhp,(text*)buff,strlen(buff),OCI_NTV_SYNTAX,OCI_DEFAULT);
+    status=(ub4)OCIStmtPrepare(tmpStmt,errhp,(text*)buff,(ub4)strlen(buff),OCI_NTV_SYNTAX,OCI_DEFAULT);
 	if(status!=0)
 	{
 		errText=checkerr(errhp,status);
@@ -828,7 +828,7 @@ long COracleDataBase::SqlPrepare(const string Stmt,long &hprStmt)
 		return -1;
 	}
 	//if(status!=0){	errText=checkerr(errhp,status);return -1;}   
-    status=OCIStmtPrepare(hpStmt,errhp,(text*) buff,strlen(buff),OCI_NTV_SYNTAX,OCI_DEFAULT);
+    status=(ub4)OCIStmtPrepare(hpStmt,errhp,(text*) buff,(ub4)strlen(buff),OCI_NTV_SYNTAX,OCI_DEFAULT);
 	if(status!=0)
 	{
 		errText=checkerr(errhp,status);
@@ -1415,7 +1415,7 @@ long COracleDataBase::WriteCLob(OdbParam* pParam,StringArrary &sa)
     {
 		pParam->Set(sa[i]);
 		Offset=Offset+WriteCount+1;
-		iWrite=sa[i].size();WriteCount=sa[i].size();
+		iWrite=(long)sa[i].size();WriteCount=(long)sa[i].size();
 		ret=SqlWriteLob(pParam,Offset,iWrite,WriteCount);
 		if(ret!=0) 
 			break;
@@ -1464,7 +1464,7 @@ long COracleDataBase::WriteLobFromFile(OdbParam* pParam,string FileName)
 	const int readcount=1024;
 	char buff[readcount];
 	memset(&buff,0x00,readcount);
-	iWrite=fread(buff,sizeof(char),readcount,f);
+	iWrite=(long)fread(buff,sizeof(char),readcount,f);
 	int ret=0;
 	while(iWrite>0)
 	{
@@ -1474,7 +1474,7 @@ long COracleDataBase::WriteLobFromFile(OdbParam* pParam,string FileName)
 		if(ret!=0)
 			break;
 		Offset+=WriteCount;
-		iWrite=fread(buff,sizeof(char),readcount,f);
+		iWrite=(long)fread(buff,sizeof(char),readcount,f);
 	}
 	fclose(f);
 	return ret;
@@ -1644,7 +1644,7 @@ long COracleDataBase :: ExecLongRawFile(long hpStmt,OdbParam* pParam)
 		case OCI_NEED_DATA:
 			{
 				memset(buff,0x00,READ_FILE_LENGTH);
-				iWrite=fread(buff,sizeof(char),READ_FILE_LENGTH,f);
+				iWrite=(long)fread(buff,sizeof(char),READ_FILE_LENGTH,f);
 				WriteCount=iWrite;
 				pParam->Set(buff,WriteCount);
 				ret=OCIStmtSetPieceInfo((dvoid*)pParam->bindhp,(ub4)OCI_HTYPE_BIND,errhp,(dvoid*)pParam->pVar,

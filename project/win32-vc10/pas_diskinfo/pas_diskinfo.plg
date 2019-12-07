@@ -1,0 +1,36 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: pas_diskinfo - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\…€ø≠ÃÔ\LOCALS~1\Temp\RSP1EA.tmp" with contents
+[
+/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Release/pas_diskinfo.pch" /Yu"stdafx.h" /Fo"Release/" /Fd"Release/" /FD /c 
+"E:\Work in Recorder\PAnalyze_1.0\src\pas_diskinfo\DiskSN.cpp"
+]
+Creating command line "cl.exe @"C:\DOCUME~1\…€ø≠ÃÔ\LOCALS~1\Temp\RSP1EA.tmp"" 
+Creating temporary file "C:\DOCUME~1\…€ø≠ÃÔ\LOCALS~1\Temp\RSP1EB.tmp" with contents
+[
+/nologo /subsystem:windows /incremental:no /pdb:"Release/pas_diskinfo.pdb" /machine:I386 /out:"Release/pas_diskinfo.exe" 
+".\Release\DiskSN.obj"
+".\Release\pas_diskinfo.obj"
+".\Release\pas_diskinfoDlg.obj"
+".\Release\StdAfx.obj"
+".\Release\pas_diskinfo.res"
+]
+Creating command line "link.exe @"C:\DOCUME~1\…€ø≠ÃÔ\LOCALS~1\Temp\RSP1EB.tmp""
+<h3>Output Window</h3>
+Compiling...
+DiskSN.cpp
+Linking...
+
+
+
+<h3>Results</h3>
+pas_diskinfo.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

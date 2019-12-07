@@ -112,8 +112,8 @@ bool STcpServerSession::SendFrame(stuSTcpPackage *pPackage,bool bAutoDelPackage/
 {
 	bool ret = STcpCommBase::SendFrame(m_pSocket,pPackage);
 #ifdef _DEBUG
-	LOGDEBUG("SEND %s->%d(len:%d,type=%d,ret=%d):%s", m_pSocket->GetPeerIp().data(),m_pServer->m_iServerPort,
-		pPackage->m_iAsduLen, pPackage->m_wFrameType, ret, pPackage->m_sHead.left(1000).data());
+// 	LOGDEBUG("SEND %s->%d(len:%d,type=%d,ret=%d):%s", m_pSocket->GetPeerIp().data(),m_pServer->m_iServerPort,
+// 		pPackage->m_iAsduLen, pPackage->m_wFrameType, ret, pPackage->m_sHead.left(1000).data());
 #endif
 	if(bAutoDelPackage)
 		delete pPackage;
@@ -134,8 +134,8 @@ bool STcpServerSession::SendFrame(SString &sHead,WORD wFrameType/*=0*/,BYTE *pAs
 {
 	bool ret = STcpCommBase::SendFrame(m_pSocket,sHead,wFrameType,pAsduBuffer,iAsduLen);
 #ifdef _DEBUG
-	LOGDEBUG("SEND %s->%d(len:%d,type=%d,ret=%d):%s", m_pSocket->GetPeerIp().data(), m_pServer->m_iServerPort,
-		iAsduLen, wFrameType, ret, sHead.left(1000).data());
+// 	LOGDEBUG("SEND %s->%d(len:%d,type=%d,ret=%d):%s", m_pSocket->GetPeerIp().data(), m_pServer->m_iServerPort,
+// 		iAsduLen, wFrameType, ret, sHead.left(1000).data());
 #endif
 	return ret;
 }
@@ -153,8 +153,8 @@ bool STcpServerSession::SendFrame(WORD wFrameType,BYTE *pAsduBuffer/*=NULL*/,int
 {
 	bool ret = STcpCommBase::SendFrame(m_pSocket,wFrameType,pAsduBuffer,iAsduLen);
 #ifdef _DEBUG
-	LOGDEBUG("SEND %s->%d(len:%d,type=%d,ret=%d):%s", m_pSocket->GetPeerIp().data(), m_pServer->m_iServerPort,
-		iAsduLen, wFrameType, ret,"");
+// 	LOGDEBUG("SEND %s->%d(len:%d,type=%d,ret=%d):%s", m_pSocket->GetPeerIp().data(), m_pServer->m_iServerPort,
+// 		iAsduLen, wFrameType, ret,"");
 #endif
 	return ret;
 }
@@ -578,7 +578,7 @@ void* STcpServerBase::ThreadService(void* lp)
 	SString sHead;
 	SSocket *pS = pSession->m_pSocket;
 	pThis->BeginThread();
-	pS->SetTimeout(5000,5000);
+	pS->SetTimeout(100,5000);
 	int last_recv_time = (int)::time(NULL);//最后接收到数据的时间
 	int last_send_time = (int)::time(NULL);//最后发送数据的时间
 	int no_recv=0;//没有收到数据的次数
@@ -598,7 +598,8 @@ void* STcpServerBase::ThreadService(void* lp)
 				{
 					//10秒没有内容发送，发一次心跳帧
 					sHead = "act=echo;";
-					pSession->lock();
+					//LOGDEBUG("lock");
+					pSession->lock();					
 					if(!((STcpCommBase*)pSession)->SendFrame(pS,sHead))
 					{
 						pSession->unlock();
@@ -607,9 +608,10 @@ void* STcpServerBase::ThreadService(void* lp)
 						break;
 					}
 #ifdef _DEBUG
- 					LOGDEBUG("SEND %s->%d(len:%d,type=%d,ret=%d):%s", pS->GetPeerIp().data(), pThis->m_iServerPort,
- 						0, 0, 1, sHead.data());
+//  					LOGDEBUG("SEND %s->%d(len:%d,type=%d,ret=%d):%s", pS->GetPeerIp().data(), pThis->m_iServerPort,
+//  						0, 0, 1, sHead.data());
 #endif
+					//LOGDEBUG("unlock");
 					pSession->unlock();
 					last_send_time = (int)::time(NULL);
 				}
@@ -621,9 +623,11 @@ void* STcpServerBase::ThreadService(void* lp)
 		}
 		while(pPackage)
 		{
+			//LOGDEBUG("lock");
 			pSession->lock();
 			if(!((STcpCommBase*)pSession)->SendFrame(pS,pPackage))
 			{
+				//LOGDEBUG("unlock");
 				pSession->unlock();
 				LOGERROR("发送报文失败!");
 				bError = true;
@@ -631,6 +635,7 @@ void* STcpServerBase::ThreadService(void* lp)
 			}
 			pSession->m_SendPackage.remove(pPackage);
 			pPackage = pSession->m_SendPackage[0];
+			//LOGDEBUG("unlock");
 			pSession->unlock();
 			if(cnt ++ > 100)
 			{
@@ -646,11 +651,19 @@ void* STcpServerBase::ThreadService(void* lp)
 			break;
 
 		//接收报文
-		pS->SetTimeout(10,5000);
+		pS->SetTimeout(100,5000);
+		//LOGDEBUG("lock");
 		pSession->lock();
+		//int soc0 = SDateTime::getNowSoc();
 		ret = pS->CheckForRecv();
+		//LOGDEBUG("unlock");
 		pSession->unlock();
-		pS->SetTimeout(5000,5000);
+		//int soc1 = SDateTime::getNowSoc();
+		//if(soc1-soc0 > 1)
+		//{
+		//	LOGDEBUG("CheckForRecv too long time(%ds)!!!!",soc1-soc0);
+		//}
+		pS->SetTimeout(100,5000);
 		if(ret < 0)
 		{
 			//异常
@@ -668,17 +681,19 @@ void* STcpServerBase::ThreadService(void* lp)
 					break;//30秒钟没有数据到达时，认为连接异常，断开连接
 				}
 			}
+			SApi::UsSleep(1000);
 		}
 		else if(ret == 1)
 		{
 			//有新的数据到达
 			no_recv = 0;
 			//pPackage = NULL;
+			//LOGDEBUG("lock");
 			pSession->lock();
 			ret = pThis->RecvFrame(pS,pRecvPackage);
 #ifdef _DEBUG
- 			LOGDEBUG("RECV %s->%d(len:%d,type=%d,ret=%d):%s", pS->GetPeerIp().data(), pThis->m_iServerPort, 
- 				pRecvPackage->m_iAsduLen, pRecvPackage->m_wFrameType, ret, pRecvPackage->m_sHead.left(1000).data());
+//  			LOGDEBUG("RECV %s->%d(len:%d,type=%d,ret=%d):%s", pS->GetPeerIp().data(), pThis->m_iServerPort, 
+//  				pRecvPackage->m_iAsduLen, pRecvPackage->m_wFrameType, ret, pRecvPackage->m_sHead.left(1000).data());
 #endif
 			if (ret == 0)
 			{
@@ -687,6 +702,7 @@ void* STcpServerBase::ThreadService(void* lp)
 			else if(ret < 0)
 			{
 				//异常
+				//LOGDEBUG("unlock");
 				pSession->unlock();
 				LOGERROR("接收报文时失败! ret=%d",ret);
 // 				if(pPackage != NULL)
@@ -740,6 +756,7 @@ void* STcpServerBase::ThreadService(void* lp)
 					last_recv_time = (int)::time(NULL);//更新接收时间
 				}
 			}
+			//LOGDEBUG("unlock");
 			pSession->unlock();
 // 			if(pPackage != NULL)
 // 			{
@@ -794,9 +811,11 @@ void* STcpServerBase::ThreadServiceAll(void* lp)
 					{
 						//10秒没有内容发送，发一次心跳帧
 						sHead = "act=echo;";
+						//LOGDEBUG("lock");
 						pSession->lock();
 						if(!((STcpCommBase*)pSession)->SendFrame(pS,sHead))
 						{
+							//LOGDEBUG("unlock");
 							pSession->unlock();
 							LOGERROR("发送心跳报文失败!");
 							pThis->OnDeleteSession(pSession);
@@ -804,9 +823,10 @@ void* STcpServerBase::ThreadServiceAll(void* lp)
 							break;
 						}
 #ifdef _DEBUG
-						LOGDEBUG("SEND %s->%d(len:%d,type=%d,ret=%d):%s", pS->GetPeerIp().data(), pThis->m_iServerPort,
-							0, 0, 1, sHead.data());
+// 						LOGDEBUG("SEND %s->%d(len:%d,type=%d,ret=%d):%s", pS->GetPeerIp().data(), pThis->m_iServerPort,
+// 							0, 0, 1, sHead.data());
 #endif
+						//LOGDEBUG("unlock");
 						pSession->unlock();
 						pSession->m_last_send_time = soc;
 					}
@@ -819,9 +839,11 @@ void* STcpServerBase::ThreadServiceAll(void* lp)
 			bError = false;
 			while(pPackage)
 			{
+				//LOGDEBUG("lock");
 				pSession->lock();
 				if(!((STcpCommBase*)pSession)->SendFrame(pS,pPackage))
 				{
+					//LOGDEBUG("unlock");
 					pSession->unlock();
 					LOGERROR("发送报文失败!");
 					bError = true;
@@ -829,6 +851,7 @@ void* STcpServerBase::ThreadServiceAll(void* lp)
 				}
 				pSession->m_SendPackage.remove(pPackage);
 				pPackage = pSession->m_SendPackage[0];
+				//LOGDEBUG("unlock");
 				pSession->unlock();
 				if(pPackage == NULL || cnt ++ > 100)
 				{
@@ -851,7 +874,7 @@ void* STcpServerBase::ThreadServiceAll(void* lp)
 			pSession->lock();
 			ret = pS->CheckForRecv();
 			pSession->unlock();
-			pS->SetTimeout(3000,5000);
+			pS->SetTimeout(100,5000);
 			if(ret < 0)
 			{
 				//异常
@@ -879,11 +902,12 @@ void* STcpServerBase::ThreadServiceAll(void* lp)
 				//有新的数据到达
 				pSession->m_no_recv = 0;
 				pPackage = NULL;
+				//LOGDEBUG("lock");
 				pSession->lock();
 				ret = pThis->RecvFrame(pS,pPackage);
 #ifdef _DEBUG
-				LOGDEBUG("RECV %s->%d(len:%d,type=%d,ret=%d):%s", pS->GetPeerIp().data(), pThis->m_iServerPort, 
-					pPackage->m_iAsduLen, pPackage->m_wFrameType, ret, pPackage->m_sHead.left(1000).data());
+// 				LOGDEBUG("RECV %s->%d(len:%d,type=%d,ret=%d):%s", pS->GetPeerIp().data(), pThis->m_iServerPort, 
+// 					pPackage->m_iAsduLen, pPackage->m_wFrameType, ret, pPackage->m_sHead.left(1000).data());
 #endif
 				if (ret == 0)
 				{
@@ -892,6 +916,7 @@ void* STcpServerBase::ThreadServiceAll(void* lp)
 				else if(ret < 0)
 				{
 					//异常
+					//LOGDEBUG("unlock");
 					pSession->unlock();
 					LOGERROR("接收报文时失败! ret=%d",ret);
 					pThis->OnDeleteSession(pSession);
@@ -942,6 +967,7 @@ void* STcpServerBase::ThreadServiceAll(void* lp)
 						pSession->m_last_recv_time = soc;//更新接收时间
 					}
 				}
+				//LOGDEBUG("unlock");
 				pSession->unlock();
 				if(pPackage != NULL)
 				{

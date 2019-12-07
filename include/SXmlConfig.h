@@ -157,7 +157,7 @@ private:
 	// 返 回 值:  true/false
 	//////////////////////////////////////////////////////////////////////////
 	bool SaveNode(SFile &file,SBaseConfig *pNode,int &level);
-
+public:
 	////////////////////////////////////////////////////////////////////////
 	// 描    述:  保存指定的节点
 	// 作    者:  邵凯田
@@ -168,7 +168,7 @@ private:
 	// 返 回 值:  true/false
 	//////////////////////////////////////////////////////////////////////////
 	bool SaveNodeText(SString &sXml,SBaseConfig *pNode,int &level);
-
+private:
 	STR_ENCODING m_iEncodeing;
 	SLock  *m_pLock;
 };

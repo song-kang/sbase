@@ -98,7 +98,7 @@ bool SSaxXml::ParseXmlFile(char* sXmlFileName, SSaxXmlEncoding encoding)
 #ifdef WIN32
 			//Windows下只需转换一次
 			SString::Utf82Gb(sXMLData,filelen+1);
-			filelen = strlen(sXMLData);
+			filelen = (int)strlen(sXMLData);
 #else
 			//char *pSrc = sXMLData;
 			SString sTemp,sNew;
@@ -159,6 +159,8 @@ bool SSaxXml::ParseText(char* sXmlText, char* &sValidXmlText,bool bLastText)
 	SString sXmlVer="";
 	char prefix;
 	char *pStr,*s0;
+	char * p_maohao;
+	int iPos;
 
 	sValidXmlText = sXmlText;
 	if(sXmlText[0] != '<')
@@ -192,50 +194,47 @@ bool SSaxXml::ParseText(char* sXmlText, char* &sValidXmlText,bool bLastText)
 			{
 				//读取节点值到当前节点
 				m_sAttrValue[0] = '\0';
+				int iPos = 0;
 				while(*sXmlText != '<' && *sXmlText != '\0')
 				{
 					if(*sXmlText == '&')
 					{
 						if(SString::equals(sXmlText,"&apos;"))
-						{
-							m_sAttrValue[strlen(m_sAttrValue)+1] = '\0';
-							m_sAttrValue[strlen(m_sAttrValue)] = '\'';
+						{							
+							m_sAttrValue[iPos++] = '\'';
 							sXmlText += 6;
 							continue;
 						}
 						else if(SString::equals(sXmlText,"&quot;"))
 						{
-							m_sAttrValue[strlen(m_sAttrValue)+1] = '\0';
-							m_sAttrValue[strlen(m_sAttrValue)] = '"';
+							m_sAttrValue[iPos++] = '"';
 							sXmlText += 6;
 							continue;
 						}
 						else if(SString::equals(sXmlText,"&lt;"))
 						{
-							m_sAttrValue[strlen(m_sAttrValue)+1] = '\0';
-							m_sAttrValue[strlen(m_sAttrValue)] = '<';
+							m_sAttrValue[iPos++] = '<';
 							sXmlText += 4;
 							continue;
 						}
 						else if(SString::equals(sXmlText,"&gt;"))
 						{
-							m_sAttrValue[strlen(m_sAttrValue)+1] = '\0';
-							m_sAttrValue[strlen(m_sAttrValue)] = '>';
+							m_sAttrValue[iPos++] = '>';
 							sXmlText += 4;
 							continue;
 						}
 						else if(SString::equals(sXmlText,"&amp;"))
 						{
-							m_sAttrValue[strlen(m_sAttrValue)+1] = '\0';
-							m_sAttrValue[strlen(m_sAttrValue)] = '&';
+							m_sAttrValue[iPos++] = '&';
 							sXmlText += 5;
 							continue;
 						}
 					}
-					m_sAttrValue[strlen(m_sAttrValue)+1] = '\0';
-					m_sAttrValue[strlen(m_sAttrValue)] = *sXmlText;
+					m_sAttrValue[iPos++] = *sXmlText;
 					sXmlText++;
 				}
+				m_sAttrValue[iPos] = '\0';
+
 				if(*sXmlText == '<' || (bLastText && *sXmlText != '\0'))
 				{
 					Characters(m_sAttrValue);
@@ -281,7 +280,7 @@ bool SSaxXml::ParseText(char* sXmlText, char* &sValidXmlText,bool bLastText)
 				if(pStr != NULL)
 				{
 					//认为是原始文本
-					sNodeValue = SString::toString(sXmlText,pStr-sXmlText);
+					sNodeValue = SString::toString(sXmlText,(int)(pStr-sXmlText));
 					if(!m_XmlStack.is_empty())
 						Characters(sNodeValue.data());
 					sXmlText = pStr + 3;
@@ -309,7 +308,7 @@ bool SSaxXml::ParseText(char* sXmlText, char* &sValidXmlText,bool bLastText)
 				Error(SSaxErr_SYNTAX_ERR,"未关闭的注释!");
 				return false;
 			}
-			sXmlText += strlen("-->");
+			sXmlText += 3;//strlen("-->");
 			sValidXmlText = sXmlText;
 			break;
 
@@ -327,18 +326,22 @@ bool SSaxXml::ParseText(char* sXmlText, char* &sValidXmlText,bool bLastText)
 			}
 			sXmlText++;
 			m_sNodeName[0] = '\0';
+			iPos = 0;
 			while(!((*sXmlText> 0 && isspace(*sXmlText)) || '='==*sXmlText || '\n'==*sXmlText || '>'==*sXmlText || '/' == *sXmlText || '\0' == *sXmlText))
 			{
-				m_sNodeName[strlen(m_sNodeName)+1] = '\0';
-				m_sNodeName[strlen(m_sNodeName)] = *sXmlText;
+				m_sNodeName[iPos++] = *sXmlText;
 				sXmlText ++;
 			}
+			m_sNodeName[iPos] = '\0';
 // 			s0 = strstr(m_sNodeName,":");
 // 			if(s0 != NULL)
 // 				s0 += 1;
 // 			else
-				s0 = m_sNodeName;
-			if(strlen(s0) == 0)
+			s0 = m_sNodeName;
+// 			p_maohao = strstr(s0,":");
+// 			if(p_maohao != 0)
+// 				s0 = p_maohao+1;
+			if(s0[0] == '\0')
 			{
 				//缺少节点名称
 				if(pSaxAttr != NULL)
@@ -674,7 +677,7 @@ SSaxXmlEx::SSaxXmlEx()
 {
 	m_Encoding = SSaxXml_GBK;
 	m_pRootNodeCallbackFun = NULL;
-	m_psTextStart = NULL;
+	m_psValidText = m_psTextStart = NULL;
 	m_ppsTextNow = &m_psTextStart;
 }
 
@@ -777,7 +780,7 @@ bool SSaxXmlEx::ParseXmlFile(char* sXmlFileName, SSaxXmlEncoding encoding)
 				sNew += sTemp.toGb2312();
 			}
 			char *pNewStr = sNew.data();
-			filelen = strlen(pNewStr);
+			filelen = (int)strlen(pNewStr);
 			while(filelen > 0 && *pNewStr != '\0' && *pNewStr != '<')
 			{
 				pNewStr++;
@@ -825,6 +828,9 @@ bool SSaxXmlEx::ParseText(char* sXmlText0, char* &sValidXmlText,bool bLastText)
 	register char* sXmlText = sXmlText0;
 	register char prefix;
 	register char *pStr,*s0,*s1,*s2,*s3;
+	char * p_maohao;
+	int iPos;
+
 	SString sTemp;
 	m_ppsTextNow = &sXmlText;
 	sValidXmlText = sXmlText;
@@ -865,50 +871,46 @@ bool SSaxXmlEx::ParseText(char* sXmlText0, char* &sValidXmlText,bool bLastText)
 			{
 				//读取节点值到当前节点
 				m_sAttrValue[0] = '\0';
+				int iPos = 0;
 				while(*sXmlText != '<' && *sXmlText != '\0')
 				{
 					if(*sXmlText == '&')
 					{
 						if(SString::equals(sXmlText,"&apos;"))
 						{
-							m_sAttrValue[strlen(m_sAttrValue)+1] = '\0';
-							m_sAttrValue[strlen(m_sAttrValue)] = '\'';
+							m_sAttrValue[iPos++] = '\'';
 							sXmlText += 6;
 							continue;
 						}
 						else if(SString::equals(sXmlText,"&quot;"))
 						{
-							m_sAttrValue[strlen(m_sAttrValue)+1] = '\0';
-							m_sAttrValue[strlen(m_sAttrValue)] = '"';
+							m_sAttrValue[iPos++] = '"';
 							sXmlText += 6;
 							continue;
 						}
 						else if(SString::equals(sXmlText,"&lt;"))
 						{
-							m_sAttrValue[strlen(m_sAttrValue)+1] = '\0';
-							m_sAttrValue[strlen(m_sAttrValue)] = '<';
+							m_sAttrValue[iPos++] = '<';
 							sXmlText += 4;
 							continue;
 						}
 						else if(SString::equals(sXmlText,"&gt;"))
 						{
-							m_sAttrValue[strlen(m_sAttrValue)+1] = '\0';
-							m_sAttrValue[strlen(m_sAttrValue)] = '>';
+							m_sAttrValue[iPos++] = '>';
 							sXmlText += 4;
 							continue;
 						}
 						else if(SString::equals(sXmlText,"&amp;"))
 						{
-							m_sAttrValue[strlen(m_sAttrValue)+1] = '\0';
-							m_sAttrValue[strlen(m_sAttrValue)] = '&';
+							m_sAttrValue[iPos++] = '&';
 							sXmlText += 5;
 							continue;
 						}
-					}
-					m_sAttrValue[strlen(m_sAttrValue)+1] = '\0';
-					m_sAttrValue[strlen(m_sAttrValue)] = *sXmlText;
+					}					
+					m_sAttrValue[iPos++] = *sXmlText;
 					sXmlText++;
 				}
+				m_sAttrValue[iPos] = '\0';
 				if(*sXmlText == '<' || (bLastText && *sXmlText != '\0'))
 				{
 // 					if(pThisChoice != NULL && pThisChoice->pCallbackFun != NULL)
@@ -1028,7 +1030,7 @@ bool SSaxXmlEx::ParseText(char* sXmlText0, char* &sValidXmlText,bool bLastText)
 				if(pStr != NULL)
 				{
 					//认为是原始文本
-					sNodeValue = SString::toString(sXmlText,pStr-sXmlText);
+					sNodeValue = SString::toString(sXmlText,(int)(pStr-sXmlText));
 // 					if(!m_XmlStack.is_empty())
 // 						Characters(sNodeValue.data());
 					sXmlText = pStr + 3;
@@ -1064,7 +1066,7 @@ bool SSaxXmlEx::ParseText(char* sXmlText0, char* &sValidXmlText,bool bLastText)
 				m_ppsTextNow = &sValidXmlText;
 				return false;
 			}
-			sXmlText += strlen("-->");
+			sXmlText += 3;//strlen("-->");
 			sValidXmlText = sXmlText;
 			break;
 
@@ -1086,18 +1088,22 @@ bool SSaxXmlEx::ParseText(char* sXmlText0, char* &sValidXmlText,bool bLastText)
 			}
 			sXmlText++;
 			m_sNodeName[0] = '\0';
+			iPos = 0;
 			while(!((*sXmlText> 0 && isspace(*sXmlText)) || '='==*sXmlText || '\n'==*sXmlText || '>'==*sXmlText || '/' == *sXmlText || '\0' == *sXmlText))
-			{
-				m_sNodeName[strlen(m_sNodeName)+1] = '\0';
-				m_sNodeName[strlen(m_sNodeName)] = *sXmlText;
+			{				
+				m_sNodeName[iPos++] = *sXmlText;
 				sXmlText ++;
 			}
+			m_sNodeName[iPos] = '\0';
 			// 			s0 = strstr(m_sNodeName,":");
 			// 			if(s0 != NULL)
 			// 				s0 += 1;
 			// 			else
 			s0 = m_sNodeName;
-			if(strlen(s0) == 0)
+// 			p_maohao = strstr(s0,":");
+// 			if(p_maohao != 0)
+// 				s0 = p_maohao+1;
+			if(s0[0] == '\0')
 			{
 				//缺少节点名称
 				if(pSaxAttr != NULL)
@@ -1162,6 +1168,7 @@ bool SSaxXmlEx::ParseText(char* sXmlText0, char* &sValidXmlText,bool bLastText)
 
 		default:
 			//提取节点信息到pNode中
+			sValidXmlText = sXmlText;
 			m_sNodeName[0] = '\0';
 			m_iNodeNameLen = 0;
 			while(!((*sXmlText> 0 && isspace(*sXmlText)) || '='==*sXmlText || '\n'==*sXmlText || '>'==*sXmlText || '/' == *sXmlText || '\0' == *sXmlText))
@@ -1177,6 +1184,9 @@ bool SSaxXmlEx::ParseText(char* sXmlText0, char* &sValidXmlText,bool bLastText)
 			// 				s0 += 1;
 			// 			else
 			s0 = m_sNodeName;
+// 			p_maohao = strstr(s0,":");
+// 			if(p_maohao != 0)
+// 				s0 = p_maohao+1;
 			if(m_iNodeNameLen == 0)
 			{
 				//缺少节点名称
@@ -1250,7 +1260,7 @@ bool SSaxXmlEx::ParseText(char* sXmlText0, char* &sValidXmlText,bool bLastText)
 						s2 = s1;
 						aga_seek:
 						sTemp = "</";
-						sTemp += s0;
+						sTemp += m_sNodeName;
 						sTemp += ">";
 						s1 = strstr(s1,sTemp.data());
 						if(s1 == NULL)
@@ -1269,10 +1279,14 @@ bool SSaxXmlEx::ParseText(char* sXmlText0, char* &sValidXmlText,bool bLastText)
 						}
 						else
 						{
+							//将s1位置临时改为结束符
+							*s1 = '\0';//原来是<
+
 							//是否中间中重复名称的子节点
-							s3 = strstr(s2,SString::toFormat("<%s ",s0).data());
+							s3 = strstr(s2,SString::toFormat("<%s ",m_sNodeName).data());
 							if(s3 == NULL)
-								s3 = strstr(s2,SString::toFormat("<%s>",s0).data());
+								s3 = strstr(s2,SString::toFormat("<%s>",m_sNodeName).data());
+							*s1 = '<';//还原
 							if(s3 != NULL && s3 < s1)
 							{
 								//有重复节点
@@ -1547,7 +1561,7 @@ bool SSaxXmlEx::ParseText(char* sXmlText0, char* &sValidXmlText,bool bLastText)
 					pStr = strstr(sXmlText,"<");
 					if(pThisChoice != NULL && pThisChoice->pCallbackFun != NULL)
 					{
-						int len = pStr-sXmlText;
+						int len = (int)(pStr-sXmlText);
 						char ch = sXmlText[len];
 						sXmlText[len] = '\0';
 						pChoice = pThisChoice->pCallbackFun(this,pSaxAttr,iThisAttrs,sXmlText);
@@ -1568,7 +1582,7 @@ bool SSaxXmlEx::ParseText(char* sXmlText0, char* &sValidXmlText,bool bLastText)
 						{
 							if(pThisChoice != NULL && pThisChoice->pCallbackFun != NULL)
 							{
-								int len = pStr-sXmlText;
+								int len = (int)(pStr-sXmlText);
 								char ch = sXmlText[len];
 								sXmlText[len] = '\0';
 								pChoice = pThisChoice->pCallbackFun(this,pSaxAttr,iThisAttrs,sXmlText);

@@ -62,11 +62,19 @@
   #else//SBASE_EXPORT_DLL
     #define SBASE_EXPORT __declspec(dllimport)
     #ifdef WIN32
-      #ifdef _DEBUG
-      #pragma comment(lib,"sbased.lib")
-      #else
-      #pragma comment(lib,"sbase.lib")
-    #endif
+	  #ifdef _WIN64
+		#ifdef _DEBUG
+		#pragma comment(lib,"sbase64d.lib")
+		#else
+		#pragma comment(lib,"sbase64.lib")
+		#endif
+	  #else
+		#ifdef _DEBUG
+		#pragma comment(lib,"sbased.lib")
+		#else
+		#pragma comment(lib,"sbase.lib")
+		#endif
+	  #endif
     #endif//WIN32
   #endif//SBASE_EXPORT_DLL
 #endif//SBASE_LIB_STATIC

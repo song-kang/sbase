@@ -26,20 +26,25 @@
 #define SNTPNTPFRAC(x) (4294*(x) + ((1981*(x))>>11))     //x*4294.967296
 #define SNTPJAN_1970 0x83aa7e80
 #pragma pack(1)
+
+struct ntp_timeval32 {
+	int    tv_sec;         /* seconds */
+	int    tv_usec;        /* and microseconds */
+};
 struct stuSNTPPackage
 	{//SNTP°ü½á¹¹
 	unsigned char cLiVnMode;
 	unsigned char cTratum;
 	unsigned char cPoll;
 	unsigned char cPrecision;
-	long nRootDelay;
-	long nRootDispersion;
-	long nReferenceIdentifier;
+	int nRootDelay;
+	int nRootDispersion;
+	int nReferenceIdentifier;
 
-	struct timeval tReferenceTimestamp;
-	struct timeval tOriginateTimestamp;
-	struct timeval tReceiveTimestamp;
-	struct timeval tTransmitTimestamp;
+	struct ntp_timeval32 tReferenceTimestamp;
+	struct ntp_timeval32 tOriginateTimestamp;
+	struct ntp_timeval32 tReceiveTimestamp;
+	struct ntp_timeval32 tTransmitTimestamp;
 };
 #pragma pack(4)
 

@@ -1,4 +1,4 @@
-include sbase.mk
+include /usr/src/uk/sbase.mk
 
 CC_TARGET   = libsbase_mdb.so
 CC_TARGET_D = libsbase_mdbd.so
@@ -16,7 +16,7 @@ all:
 
 debug:
 		$(CC) -c $(SRCS) $(CC_INCLUDES) $(CC_COMPLIE_D)
-		$(RM) $(CC_TARGET_D)
+		$(RM) $(CC_TARGET)
 		$(CC) -shared $(OBJS) -o $(CC_TARGET_D)
 		$(RM) *.o
 		$(CP) $(CC_TARGET_D) $(INSTALL_PATH)/
@@ -24,8 +24,6 @@ debug:
 clean:
 		$(RM) *.o
 		$(RM) $(CC_TARGET)
-		$(RM) $(CC_TARGET_D)
 
 install:
 		$(CP) $(CC_TARGET) $(INSTALL_PATH)/$(CC_TARGET)
-		$(CP) $(CC_TARGET_D) $(INSTALL_PATH)/$(CC_TARGET_D)

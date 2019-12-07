@@ -667,9 +667,10 @@ bool SQt::ShowQuestionBox(QString tip,QString text,QWidget *parent)
 void SQt::SetTableWidgetStyle(QTableWidget *pTableWidget)
 {
 	//表格样式
-	pTableWidget->horizontalHeader()->setStyleSheet("QHeaderView::section{border:2px groove gray;border-radius:10px;padding:2px 4px;background-color: rgb(100, 179, 238);}");
+	//pTableWidget->horizontalHeader()->setStyleSheet("QHeaderView::section{border:2px groove gray;border-radius:10px;padding:2px 4px;background-color: rgb(100, 179, 238);}");
 	//pTableWidget->setStyleSheet(QString::fromUtf8("background-color: rgb(220, 230, 240);alternate-background-color: rgb(188, 206, 220);selection-background-color: rgb(96,134,185);"));
-	pTableWidget->setStyleSheet(QString::fromUtf8("background-color: rgb(255,255,255);alternate-background-color: rgb(220, 230, 240);selection-background-color: rgb(96,134,185);"));
+	//MEMO: 改为国网运检测试 [2018-9-12 16:42 邵凯田] pTableWidget->setStyleSheet(QString::fromUtf8("alternate-background-color: rgb(220, 230, 240);selection-background-color: rgb(96,134,185);"));//background-color: rgb(255,255,255);
+	//pTableWidget->setStyleSheet(QString::fromUtf8("alternate-background-color: rgb(43, 48, 91);selection-background-color: rgb(96,134,185);"));//background-color: rgb(255,255,255);
 	pTableWidget->setAlternatingRowColors(true);
 	pTableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
 	//pTableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);

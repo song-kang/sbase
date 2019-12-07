@@ -12,7 +12,12 @@
  **/
 
 #include "SDatabaseOper.h"
+#include "SApi.h"
 
+//最大的DMLSQL缓冲数量
+static int g_iMaxDmlBufferSize = 500000;
+static int g_iMaxDmlPackageBytes = 65536;
+#define C_SQL_SIGNAL_QUOTES "~@~"
 SDatabaseOper::SDatabaseOper()
 {
 	m_pDatabasePool = m_pSlaveDatabasePool = m_pActionDatabasePool = NULL;
@@ -20,10 +25,15 @@ SDatabaseOper::SDatabaseOper()
 	m_bDmlPublishThreadRuning = false;
 	m_sDmlSqlBuffered.setAutoDelete(true);
 	m_sDmlSqlBuffered.setShared(true);
+	m_DbSyncSqls.setShared(true);
+	m_SlaveDbSyncSqls.setShared(true);
+	m_iThreads = 0;
 }
 
 SDatabaseOper::~SDatabaseOper()
 {
+	m_pDatabasePool = m_pSlaveDatabasePool = m_pActionDatabasePool = NULL;
+	WaitQuit();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -161,7 +171,7 @@ bool SDatabaseOper::ExecuteSQL(SString sql)
 {
 	if(m_bDmlPublishThreadRuning && sql.left(18) != "/*ssp_no_publish*/")
 	{
-		if(m_sDmlSqlBuffered.count() < 500000)
+		if(m_sDmlSqlBuffered.count() < g_iMaxDmlBufferSize)
 			m_sDmlSqlBuffered.append(new SString(sql));
 		else
 		{
@@ -220,7 +230,7 @@ bool SDatabaseOper::ExecuteSQL(SString sql)
 //////////////////////////////////////////////////////////////////////////
 bool SDatabaseOper::Start(bool bGlobalSync)
 {
-	if(m_bQuit == false || m_pSlaveDatabasePool == NULL)
+	if(/*m_bQuit == false || */m_pSlaveDatabasePool == NULL)
 	{
 		if(m_pSlaveDatabasePool == NULL)
 		{
@@ -244,6 +254,14 @@ bool SDatabaseOper::Start(bool bGlobalSync)
 bool SDatabaseOper::Quit()
 {
 	m_bQuit = true;
+
+	return true;
+}
+
+bool SDatabaseOper::WaitQuit()
+{
+	while(m_iThreads > 0)
+		SApi::UsSleep(10000);
 	return true;
 }
 
@@ -282,7 +300,7 @@ bool SDatabaseOper::UpdateLobFromFile(SString sTable,SString sLobField,SString s
 				LOGWARN("数据库已切换到%s数据库运行!",pThisPool==m_pDatabasePool?"主":"备用");
 			}
 			SString sql;
-			sql.sprintf("table=%s{$SEP$}field=%s{$SEP$}where=%s{$SEP$}",sTable.data(),sLobField.data(),sWhere.data());
+			sql.sprintf("act=update_lob{$SEP$}table=%s{$SEP$}field=%s{$SEP$}where=%s{$SEP$}",sTable.data(),sLobField.data(),sWhere.data());
 			AddHistoryOperSql(pThisPool,sql);
 			m_Wait.post();
 			return true;
@@ -388,7 +406,7 @@ bool SDatabaseOper::ReadLobToMem(SString sTable,SString sLobField,SString sWhere
 			{
 				m_pActionDatabasePool = pThisPool;
 				LOGWARN("数据库已切换到%s数据库运行!",pThisPool==m_pDatabasePool?"主":"备用");
-			}
+			}			
 			return true;
 		}
 		else if(pDB->GetStatus() != SDatabase::DBERROR)
@@ -452,6 +470,10 @@ bool SDatabaseOper::UpdateLobFromMem(SString sTable,SString sLobField,SString sW
 				m_pActionDatabasePool = pThisPool;
 				LOGWARN("数据库已切换到%s数据库运行!",pThisPool==m_pDatabasePool?"主":"备用");
 			}
+			SString sql;
+			sql.sprintf("act=update_lob{$SEP$}table=%s{$SEP$}field=%s{$SEP$}where=%s{$SEP$}",sTable.data(),sLobField.data(),sWhere.data());
+			AddHistoryOperSql(pThisPool,sql);
+			m_Wait.post();
 			return true;
 		}
 		else if(pDB->GetStatus() != SDatabase::DBERROR)
@@ -481,75 +503,122 @@ void* SDatabaseOper::ThreadDbSync(void* lp)
 {
 	SDatabaseOper *pThis = (SDatabaseOper*)lp;
 	S_INTO_THREAD;
-	SDatabasePool<SDatabase> *pThisPool;
-	SDatabase *pDb;
+	SDatabasePool<SDatabase> *pThisPool,*pThatPool;
+	SDatabase *pDb,*pDb2;
+	SString *pSql;
 	SString sql;
 	SRecordset rs;
 	int last_soc=0;
+	int last_soc0=0;
 	int soc;
 	bool bret;
 	int cnt;
+	int times=0;
+	pThis->m_iThreads++;
 	while(!pThis->m_bQuit)
 	{
 		//重连数据库
 		pThisPool = pThis->m_pActionDatabasePool;
-		if(pThisPool != pThis->m_pDatabasePool)
+		soc = (int)SDateTime::getNowSoc();
+		if(abs(soc - last_soc0) > 1)
 		{
-			//判断主数据库是否恢复连接正常?
-			pThisPool = pThis->m_pDatabasePool;
-			pDb = pThisPool->GetDatabase(true);
-			if(pDb != NULL)
+			last_soc0 = soc;
+			if(pThisPool != pThis->m_pDatabasePool)
 			{
-				pThisPool->Release(pDb);
-				LOGWARN("主数据库连接恢复，切换回主数据库运行!");
-				pThis->m_pActionDatabasePool = pThis->m_pDatabasePool;
+				//判断主数据库是否恢复连接正常?
+				pThisPool = pThis->m_pDatabasePool;
+				pDb = pThisPool->GetDatabase(true);
+				if(pDb != NULL)
+				{
+					pThisPool->Release(pDb);
+					LOGWARN("主数据库连接恢复，切换回主数据库运行!");
+					pThis->m_pActionDatabasePool = pThis->m_pDatabasePool;
+				}
+			}
+			if(pThisPool != pThis->m_pSlaveDatabasePool && pThis->m_pSlaveDatabasePool != NULL)
+			{
+				//判断主数据库是否恢复连接正常?
+				pThisPool = pThis->m_pSlaveDatabasePool;
+				pDb = pThisPool->GetDatabase(true);
+				if(pDb != NULL)
+				{
+					pThisPool->Release(pDb);
+				}
 			}
 		}
-		if(pThisPool != pThis->m_pSlaveDatabasePool && pThis->m_pSlaveDatabasePool != NULL)
-		{
-			//判断主数据库是否恢复连接正常?
-			pThisPool = pThis->m_pSlaveDatabasePool;
-			pDb = pThisPool->GetDatabase(true);
-			if(pDb != NULL)
-			{
-				pThisPool->Release(pDb);
-			}
-		}
-
 		//全局同步
 		if(pThis->m_bGlobalSync)
 		{
 			soc = (int)SDateTime::getNowSoc();
-			if(abs(soc - last_soc) >= 5)//5秒执行一次全局同步
+			if(times<5 || abs(soc - last_soc) >= 5)//5秒执行一次全局同步,即从数据库缓存中同步
 			{
+				times ++;
+				int total=0;
 				for(int i=0;i<2&&!pThis->m_bQuit;i++)
 				{
 					if(i==0)
+					{
 						pThisPool = pThis->m_pDatabasePool;
+						pThatPool = pThis->m_pSlaveDatabasePool;
+					}
 					else
+					{
 						pThisPool = pThis->m_pSlaveDatabasePool;
+						pThatPool = pThis->m_pDatabasePool;
+					}
 					rs.clear();
 					pDb = pThisPool->GetDatabase();
 					if(pDb == NULL)
 						continue;
-					cnt = pDb->Retrieve("select oper_sn,sql_text from t_dbsync_history order by oper_sn",rs);
+					if(pDb->GetDbType() == DB_ORACLE)
+						cnt = pDb->Retrieve("select sql_sn,sql_text from t_ssp_db_sql_buffer where rownum<1000 order by sql_sn",rs);
+					else if(pDb->GetDbType() == DB_MYSQL)
+						cnt = pDb->Retrieve("select sql_sn,sql_text from t_ssp_db_sql_buffer order by sql_sn limit 1000",rs);
+					else
+						cnt = pDb->Retrieve("select sql_sn,sql_text from t_ssp_db_sql_buffer order by sql_sn",rs);
 					if(cnt > 0)
 					{
-						for(int j=0;j<cnt&&!pThis->m_bQuit;j++)
+						pDb2 = pThatPool->GetDatabase(true);
+						total += cnt;
+						for(int j=0;pDb2!=NULL&&j<cnt&&!pThis->m_bQuit;j++)
 						{
 							sql = rs.GetValue(j,1);
-							if(!pDb->Execute(sql))
+							if(sql.left(23) == "act=update_lob{$SEP$}table=")
 							{
-								LOGERROR("同步%s数据库时失败!sql=%s",pThisPool==pThis->m_pDatabasePool?"主":"备",sql.left(1000).data());
+								SString sTable,sLobField,sWhere,sFile;
+								sTable = SString::GetAttributeValue(sql,"table","=","{$SEP$}");
+								sLobField = SString::GetAttributeValue(sql,"field","=","{$SEP$}");
+								sWhere = SString::GetAttributeValue(sql,"where","=","{$SEP$}");
+								BYTE *pBuf = NULL;
+								int iBufLen = 0;
+								if(pDb->ReadLobToMem(sTable,sLobField,sWhere,pBuf,iBufLen))
+								{
+									if(pDb2->UpdateLobFromMem(sTable,sLobField,sWhere,pBuf,iBufLen))
+									{
+										sql.sprintf("delete from t_ssp_db_sql_buffer where sql_sn=%s",rs.GetValue(j,0).data());
+										pDb->Execute(sql);
+									}
+								}
+								if(pBuf != NULL)
+									delete[] pBuf;
+								continue;
+							}
+							sql.replace(C_SQL_SIGNAL_QUOTES,"'");
+							if(!pDb2->Execute(sql))
+							{
+								LOGERROR("同步%s数据库时失败!sql=%s",pThatPool==pThis->m_pDatabasePool?"主":"备",sql.left(1000).data());
 								break;
 							}
-							sql.sprintf("delete from t_dbsync_history where oper_sn=%s",rs.GetValue(j,0).data());
+							sql.sprintf("delete from t_ssp_db_sql_buffer where sql_sn=%s",rs.GetValue(j,0).data());
 							pDb->Execute(sql);
 						}
+						if(pDb2 != NULL)
+							pThatPool->Release(pDb2);
 					}
 					pThisPool->Release(pDb);
 				}
-				last_soc = soc;
+				if(total < 1000)
+					last_soc = soc;
 			}
 		}
 
@@ -559,13 +628,64 @@ void* SDatabaseOper::ThreadDbSync(void* lp)
 			pDb = pThis->m_pDatabasePool->GetDatabase();
 			if(pDb != NULL)
 			{
+				pDb2 = NULL;
 				while(pThis->m_DbSyncSqls.count()>0 && !pThis->m_bQuit)
 				{
-					bret = pDb->Execute(*pThis->m_DbSyncSqls[0]);
+					pSql = pThis->m_DbSyncSqls[0];
+					if(pSql->left(27) == "act=update_lob{$SEP$}table=")
+					{
+						//update blob
+						if(pDb2 == NULL)
+							pDb2 = pThis->m_pSlaveDatabasePool->GetDatabase(true);
+						if(pDb2 != NULL)
+						{
+							SString sTable,sLobField,sWhere,sFile;
+							sTable = SString::GetAttributeValue(*pSql,"table","=","{$SEP$}");
+							sLobField = SString::GetAttributeValue(*pSql,"field","=","{$SEP$}");
+							sWhere = SString::GetAttributeValue(*pSql,"where","=","{$SEP$}");
+							BYTE *pBuf = NULL;
+							int iBufLen = 0;
+							bret = false;
+							if(pDb2->ReadLobToMem(sTable,sLobField,sWhere,pBuf,iBufLen))
+								bret = pDb->UpdateLobFromMem(sTable,sLobField,sWhere,pBuf,iBufLen);
+							if(pBuf != NULL)
+								delete[] pBuf;
+						}
+					}
+					else
+					{
+						bret = pDb->Execute(*pSql);
+					}
 					if(!bret)
-						break;
+					{
+						if(pDb->GetStatus() == SDatabase::DBERROR)
+						{
+							//数据库连接错误，写入另一连接池的SQL缓存
+							SDatabase *pDb2 = pThis->m_pSlaveDatabasePool->GetDatabase();
+							if(pDb2 != NULL)
+							{
+								SString rawSql = *pSql;
+								rawSql.replace("'",C_SQL_SIGNAL_QUOTES);
+								sql = "insert into t_ssp_db_sql_buffer(sql_sn,sql_text)  (select (select ifnull(max(sql_sn),0)+1 from t_ssp_db_sql_buffer),'";
+								sql += rawSql;
+								sql += "')";
+								pDb2->Execute(sql);
+							}
+						}
+						else
+						{
+							static int cnt = 0;
+							if(cnt ++ < 1000)
+							{
+								LOGERROR("主库无法同步写入从库SQL：%s",pSql->data());
+							}
+						}
+						//break;
+					}
 					pThis->m_DbSyncSqls.remove(0);
 				}
+				if(pDb2 != NULL)
+					pThis->m_pSlaveDatabasePool->Release(pDb2);
 			}
 			pThis->m_pDatabasePool->Release(pDb);
 		}
@@ -574,20 +694,72 @@ void* SDatabaseOper::ThreadDbSync(void* lp)
 			pDb = pThis->m_pSlaveDatabasePool->GetDatabase();
 			if(pDb != NULL)
 			{
+				pDb2 = NULL;
 				while(pThis->m_SlaveDbSyncSqls.count()>0 && !pThis->m_bQuit)
 				{
-					bret = pDb->Execute(*pThis->m_SlaveDbSyncSqls[0]);
+					pSql = pThis->m_SlaveDbSyncSqls[0];
+					if(pSql->left(27) == "act=update_lob{$SEP$}table=")
+					{
+						//update blob
+						if(pDb2 == NULL)
+							pDb2 = pThis->m_pDatabasePool->GetDatabase(true);
+						if(pDb2 != NULL)
+						{
+							SString sTable,sLobField,sWhere,sFile;
+							sTable = SString::GetAttributeValue(*pSql,"table","=","{$SEP$}");
+							sLobField = SString::GetAttributeValue(*pSql,"field","=","{$SEP$}");
+							sWhere = SString::GetAttributeValue(*pSql,"where","=","{$SEP$}");
+							sFile = SString::GetAttributeValue(*pSql,"file","=","{$SEP$}");
+							BYTE *pBuf = NULL;
+							int iBufLen = 0;
+							bret = false;
+							if(pDb2->ReadLobToMem(sTable,sLobField,sWhere,pBuf,iBufLen))
+								bret = pDb->UpdateLobFromMem(sTable,sLobField,sWhere,pBuf,iBufLen);
+							if(pBuf != NULL)
+								delete[] pBuf;
+						}
+					}
+					else
+					{
+						bret = pDb->Execute(*pSql);
+					}
 					if(!bret)
-						break;
+					{
+						if(pDb->GetStatus() == SDatabase::DBERROR)
+						{
+							//数据库连接错误，写入另一连接池的SQL缓存
+							SDatabase *pDb2 = pThis->m_pDatabasePool->GetDatabase();
+							if(pDb2 != NULL)
+							{
+								SString rawSql = *pSql;
+								rawSql.replace("'",C_SQL_SIGNAL_QUOTES);
+								sql = "insert into t_ssp_db_sql_buffer(sql_sn,sql_text)  (select (select ifnull(max(sql_sn),0)+1 from t_ssp_db_sql_buffer),'";
+								sql += rawSql;
+								sql += "')";
+								pDb2->Execute(sql);
+							}
+						}
+						else
+						{
+							static int cnt = 0;
+							if(cnt ++ < 1000)
+							{
+								LOGERROR("从库无法同步写入主库SQL：%s",pSql->data());
+							}
+						}
+						//break;
+					}
 					pThis->m_SlaveDbSyncSqls.remove(0);
 				}
+				if(pDb2 != NULL)
+					pThis->m_pDatabasePool->Release(pDb2);
 			}
 			pThis->m_pSlaveDatabasePool->Release(pDb);
 		}
 
 		pThis->m_Wait.wait(500);		
 	}
-
+	pThis->m_iThreads--;
 	return NULL;
 }
 
@@ -604,11 +776,72 @@ bool SDatabaseOper::StartDmlPublish(SString sIp,int iTcpPort)
 	if(m_bDmlPublishThreadRuning)
 		return false;
 	m_bDmlPublishThreadRuning = true;
-	m_sDmlPublishServerIp = sIp;
-	m_iDmlPublishServerTcpPort = iTcpPort;
-	SKT_CREATE_THREAD(ThreadDmlPublish,this);
+
+	stuDmlPublishThreadParam *pParam = new stuDmlPublishThreadParam();
+	pParam->pThis = this;
+	pParam->pub_dml_sqls = &m_sDmlSqlBuffered;
+	pParam->pub_ip = sIp;
+	pParam->pub_port = iTcpPort;
+	pParam->is_master = true;
+	SKT_CREATE_THREAD(ThreadDmlPublish,pParam);
 	return true;
 }
+
+//////////////////////////////////////////////////////////////////////////
+// 描    述:  设备DML发布的最大缓冲数量,缺省500000
+// 作    者:  邵凯田
+// 创建时间:  2019-4-23 19:23
+// 参数说明:  @max为最大缓冲SQL的数量,0表示不限制数量
+// 返 回 值:  void
+//////////////////////////////////////////////////////////////////////////
+void SDatabaseOper::SetDmlPublishMaxBufferSize(int max)
+{
+	g_iMaxDmlBufferSize = max;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// 描    述:  设备DML发布数据包的大小，缺省65536
+// 作    者:  邵凯田
+// 创建时间:  2019-4-23 19:30
+// 参数说明:  @bytes为单次最大发送的数据包字节大小
+// 返 回 值:  void
+//////////////////////////////////////////////////////////////////////////
+void SDatabaseOper::SetDmlPublishPackageSize(int bytes)
+{
+	g_iMaxDmlPackageBytes = bytes;
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+// 描    述:  保存所有的历史DML缓冲记录到数据库
+// 作    者:  邵凯田
+// 创建时间:  2019-4-24 0:04
+// 参数说明:  void
+// 返 回 值:  void
+//////////////////////////////////////////////////////////////////////////
+void SDatabaseOper::SaveHisDmlSqls(SPtrList<SString> *pub_dml_sqls,SDatabase *pDb)
+{
+	if(pub_dml_sqls->count() <= 0)
+		return;
+	///*ssp_no_publish*/insert into t_ssp_db_sql_publish(sql_sn,sql_text) (select (select ifnull(max(sql_sn),0)+1 from t_ssp_db_sql_publish),'aaa' )
+	SString sql;
+	SString *pSql;
+	unsigned long pos;
+	SString rawSql;
+	pSql = pub_dml_sqls->FetchFirst(pos);
+	while(pSql)
+	{
+		rawSql = *pSql;
+		rawSql.replace("'",C_SQL_SIGNAL_QUOTES);
+		sql = "/*ssp_no_publish*/insert into t_ssp_db_sql_publish(sql_sn,sql_text)  (select (select ifnull(max(sql_sn),0)+1 from t_ssp_db_sql_publish),'";
+		sql += rawSql;
+		sql += "')";
+		pDb->Execute(sql.left(sql.length()-1));
+		pSql = pub_dml_sqls->FetchNext(pos);
+	}
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // 描    述:  DML语句的发布进程
@@ -619,26 +852,58 @@ bool SDatabaseOper::StartDmlPublish(SString sIp,int iTcpPort)
 //////////////////////////////////////////////////////////////////////////
 void* SDatabaseOper::ThreadDmlPublish(void* lp)
 {
-	SDatabaseOper *pThis = (SDatabaseOper*)lp;
+	stuDmlPublishThreadParam *pParam = (stuDmlPublishThreadParam*)lp;
+	SDatabaseOper *pThis = pParam->pThis;
 	S_INTO_THREAD;
 	SDmlPubClient tcp;
 	SString *pSql;
 	SString sqls = "";
 	SString sHead = "";
 	int last_send_soc=(int)SDateTime::getNowSoc();
+	int sql_cnt = 0;
+	int i,ret,sn;
+	unsigned long pos;
+	SRecordset rs;
+	SString sql;
+	stuSTcpPackage* pRecvPackage = NULL;
+	SDatabasePool<SDatabase> *pPool = pParam->is_master?pThis->m_pDatabasePool:pThis->m_pSlaveDatabasePool;
+	SDatabase *pDb;
+	pThis->m_iThreads++;
 // 	SString sLogin ="type=dml_publish;";
 // 	tcp.SetLoginInfo(sLogin);
 	
 	while(!pThis->m_bQuit)
 	{
-		if(!tcp.Connect(pThis->m_sDmlPublishServerIp,pThis->m_iDmlPublishServerTcpPort))
+		if(!tcp.Connect(pParam->pub_ip,pParam->pub_port))
 		{
+			//将全部缓存SQL记录保存到数据库进行持久化
+			pDb = pPool->GetDatabase();
+			if(pDb != NULL)
+			{
+				pThis->SaveHisDmlSqls(pParam->pub_dml_sqls,pDb);
+				pPool->Release(pDb);
+			}
 			SApi::UsSleep(100000);
 			continue;
 		}
+		//从数据库加载全部历史缓冲SQL
+		sql = "select sql_sn,sql_text from t_ssp_db_sql_publish order by sql_sn";
+		pDb = pPool->GetDatabase();
+		rs.clear();
+		if(pDb != NULL)
+		{
+			pDb->Retrieve(sql,rs);
+			pPool->Release(pDb);
+		}
+		for(i=0;i<rs.GetRows();i++)
+		{
+			sn = rs.GetValueInt(i,0);
+			sql = rs.GetValueStr(i,1);
+			pParam->pub_dml_sqls->append(new SString(sql));
+		}
 		while(!pThis->m_bQuit)
 		{
-			if(pThis->m_sDmlSqlBuffered.count() == 0)
+			if(pParam->pub_dml_sqls->count() == 0)
 			{
 				if(sqls.length() > 0)
 				{
@@ -661,22 +926,46 @@ void* SDatabaseOper::ThreadDmlPublish(void* lp)
 				SApi::UsSleep(10000);
 				continue;
 			}
-			if(sqls.length() >= 65536)
+
+			if(sqls.length() < g_iMaxDmlPackageBytes)
 			{
-				if(!tcp.SendFrame(sHead,1,(BYTE*)sqls.data(),sqls.length()))
-					break;
+				pSql = pParam->pub_dml_sqls->FetchFirst(pos);
+				while(pSql)
+				{
+					sql_cnt++;
+					if(sqls.length() > 0)
+						sqls += "{$SQL_SEP$}";
+					sqls += *pSql;
+					if(sqls.length() >= g_iMaxDmlPackageBytes)
+						break;
+					pSql = pParam->pub_dml_sqls->FetchNext(pos);
+				}
+			}
+
+			if(sqls.length() >= g_iMaxDmlPackageBytes)
+			{
 				last_send_soc=(int)SDateTime::getNowSoc();
+				ret = tcp.SendAndRecv(pRecvPackage,sHead,1,(BYTE*)sqls.data(),sqls.length(),60,2);
+				if(!ret)
+					break;
+				if(pRecvPackage == NULL || pRecvPackage->m_wFrameType != 2)
+					continue;
+				//订阅端返回的finish_cnt表示成功执行的数量
+				int cnt = SString::GetAttributeValueI(pRecvPackage->m_sHead,"finish_cnt");
+				//删除cnt对应前cnt条SQL记录
+				for(i=0;i<cnt;i++)
+					pParam->pub_dml_sqls->remove(0);
 				sqls = "";
 			}
-			pSql = pThis->m_sDmlSqlBuffered[0];
-			if(sqls.length() > 0)
-				sqls += "{$SQL_SEP$}";
-			sqls += *pSql;
-			pThis->m_sDmlSqlBuffered.remove(0);
-		}
+		}//end while
+	}//end while
+	pDb = pPool->GetDatabase();
+	if(pDb != NULL)
+	{
+		pThis->SaveHisDmlSqls(pParam->pub_dml_sqls,pDb);
+		pPool->Release(pDb);
 	}
-	if(sqls.length() > 0)
-		tcp.SendFrame(sHead,1,(BYTE*)sqls.data(),sqls.length());
+	pThis->m_iThreads--;
 	return NULL;
 }
 

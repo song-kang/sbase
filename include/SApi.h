@@ -164,14 +164,14 @@ enum SBASE_EXPORT SKT_BYTE_ORDER
 	#define SKT_CREATE_THREAD(fun,p) \
 		{ \
 			HANDLE h; \
-			h = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)(int)fun, (LPVOID)p, 0, 0); \
+			h = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)(void*)fun, (LPVOID)p, 0, 0); \
 			CloseHandle(h); \
 		} 
 	//创建线程并指定栈大小，WINDOW上无效
 	#define SKT_CREATE_THREAD_S(fun,p,stack_size) \
 		{ \
 			HANDLE h; \
-			h = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)(int)fun, (LPVOID)p, 0, 0); \
+			h = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)(void*)fun, (LPVOID)p, 0, 0); \
 			CloseHandle(h); \
 		} 
 

@@ -181,7 +181,7 @@ int SString::PrepareStrLen()
 	if(m_pStr == NULL)
 		m_iStrLen = 0;
 	else
-		m_iStrLen = strlen(m_pStr);
+		m_iStrLen = (int)strlen(m_pStr);
 	return m_iStrLen;
 }
 
@@ -308,7 +308,7 @@ void SString::SetString(const char *pStr,int len/*=-1*/)
 		SetString("");
 		return;
 	}
-	int size = len==-1?(strlen(pStr)+1):(len+1);
+	int size = (int)(len==-1?(strlen(pStr)+1):(len+1));
 	if(size > m_iSize)
 	{
 		if(m_pStr != NULL)
@@ -449,7 +449,7 @@ int SString::find(SString s, int i /*= -1*/, bool cs /*= true*/)//²éÕÒ×Ö·û´®,csÊ
 	char *pHexesult = strstr(s1.m_pStr+i,s2.m_pStr);
 	if(pHexesult == NULL)
 		return -1;
-	return pHexesult - s1.m_pStr;
+	return (int)(pHexesult - s1.m_pStr);
 }
 
 int SString::findRev(char c, int i /*= -1*/, bool cs /*= true*/)//·´Ïò²éÕÒ×Ö·û,csÊÇ·ñ´óÐ¡Ð´Ãô¸Ð
@@ -488,7 +488,7 @@ int SString::findRev(SString s, int i /*= -1*/, bool cs /*= true*/)//·´Ïò²éÕÒ×Ö·
 		char *pHexesult = strstr(pStrTmp,s2.m_pStr);
 		if(pHexesult != NULL)
 		{
-			return (pHexesult - s1.m_pStr);
+			return (int)(pHexesult - s1.m_pStr);
 		}
 	}
 	if(strstr(pStrTmp,s2.m_pStr) != NULL)
@@ -585,7 +585,7 @@ SString & SString::operator+=( char c )
 
 SString & SString::operator+=( char *str )
 {
-	int len = strlen(str);
+	int len = (int)strlen(str);
 	int size  = m_iStrLen + len +1;
 	if(m_iSize < size)
 	{
@@ -600,7 +600,7 @@ SString & SString::operator+=( char *str )
 
 SString & SString::operator+=(const  char *str )
 {
-	int len = strlen(str);
+	int len = (int)strlen(str);
 	int size  = m_iStrLen + len +1;
 	if(m_iSize < size)
 	{
@@ -630,7 +630,7 @@ SString SString::operator+(const SString &s)
 
 SString SString::operator+(char * s) 
 {
-	int len = strlen(s);
+	int len = (int)strlen(s);
 	int size  = m_iStrLen + len;
 	SString str(size);
 	if(m_iStrLen>0)
@@ -645,7 +645,7 @@ SString SString::operator+(char * s)
 
 SString SString::operator+(const char *s)
 {
-	int len = strlen(s);
+	int len = (int)strlen(s);
 	int size = m_iStrLen + len;
 	SString str(size);
 	if (m_iStrLen>0)
@@ -1362,7 +1362,7 @@ bool SString::ReadToChar(char* &pSrcStr,char *sStopChar,SString &sResult)
 		pSrcStr += strlen(pSrcStr);
 		return true;
 	}
-	sResult.SetString(pSrcStr,str-pSrcStr);
+	sResult.SetString(pSrcStr,(int)(str-pSrcStr));
 	pSrcStr = str + strlen(sStopChar);
 	return true;
 }
@@ -1389,9 +1389,9 @@ SString SString::GetIdAttribute(int index,SString &sAttr,SString chSep/*=";"*/)
 	}
 	char* pStr2 = strstr(pStr,chSep.data());
 	if(pStr2 == NULL)
-		return sAttr.mid(pStr-sAttr.data());
+		return sAttr.mid((int)(pStr-sAttr.data()));
 	else
-		return sAttr.mid(pStr-sAttr.data(),pStr2-pStr);
+		return sAttr.mid((int)(pStr-sAttr.data()),(int)(pStr2-pStr));
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1474,7 +1474,7 @@ SString SString::GetAttributeValue(SString &sAttr,SString sName,SString chEqual/
 	iPos1 = sAttr.find(sName+chEqual);
 	if(iPos1==0)
 	{
-		iPos1 += strlen(sName)+strlen(chEqual);
+		iPos1 += (int)(strlen(sName)+strlen(chEqual));
 		iPos2 = sAttr.find(chSep,iPos1);
 		if(iPos2 < 0)
 		{
@@ -1490,7 +1490,7 @@ SString SString::GetAttributeValue(SString &sAttr,SString sName,SString chEqual/
 		iPos1 = sAttr.find(chSep+sName+chEqual);
 		if(iPos1 < 0)
 			return "";
-		iPos1 += strlen(sName)+1+chSep.m_iStrLen;
+		iPos1 += (int)strlen(sName)+1+chSep.m_iStrLen;
 		iPos2 = sAttr.find(chSep,iPos1);
 		if(iPos2 < 0)
 			return sAttr.mid(iPos1);

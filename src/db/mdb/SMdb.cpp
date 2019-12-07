@@ -88,10 +88,15 @@ void SMdb::OnClose()
 bool SMdb::TestConnect()
 {
 	if (m_MdbClient.IsConnected())
+	{
+		SetStatus(IDLE);
 		return true;
+	}
 	else
+	{
+		SetStatus(DBERROR);
 		return false;
-	SetStatus(IDLE);
+	}	
 	return true;
 }
 
